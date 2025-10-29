@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Deadlines</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Mon Suivi de Projets</h1>
+    </header>
+
+    <main>
+        <section id="form-container">
+            <h2>Ajouter un projet</h2>
+            <form id="project-form">
+                <input type="text" id="project-name" placeholder="Nom du projet" required>
+                <label for="start-date">Début :</label>
+                <input type="date" id="start-date" required>
+                <label for="end-date">Fin :</label>
+                <input type="date" id="end-date" required>
+                <button type="submit">Ajouter</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <section id="projects-container">
+            <h2>Mes projets en cours</h2>
+            </section>
+    </main>
+    </main>
+    <script src="script.js" type="module"></script>
+</body>
+</html>
