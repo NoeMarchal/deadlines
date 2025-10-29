@@ -8,7 +8,9 @@ import {
     addDoc,         // Pour ajouter un document
     onSnapshot,     // Pour écouter en temps réel
     deleteDoc,      // Pour supprimer un document
-    doc             // Référence à un document précis
+    doc,            // Référence à un document précis
+    query,          // NOUVEAU : Pour créer une requête
+    orderBy         // NOUVEAU : Pour trier les résultats
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 
@@ -53,12 +55,13 @@ projectForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    // Nouvelle syntaxe v9 pour AJOUTER
+    // Nouvelle syntaxE v9 pour AJOUTER
     try {
         await addDoc(projectsCollection, {
             name: name,
             start: start,
             end: end
+            // Firebase ajoute automatiquement un timestamp, mais trier par "end" est mieux
         });
         projectForm.reset();
     } catch (error) {
@@ -66,8 +69,14 @@ projectForm.addEventListener('submit', async (e) => {
     }
 });
 
-// --- AFFICHER LES PROJETS (TEMPS RÉEL) ---
-onSnapshot(projectsCollection, (snapshot) => {
+// --- AFFICHER LES PROJETS (TEMPS RÉEL ET TRIÉS) ---
+
+// NOUVEAU : On crée une requête qui trie les projets par date de fin ("end")
+// "asc" = ascendant (du plus proche au plus lointain)
+const q = query(projectsCollection, orderBy("end", "asc"));
+
+// NOUVEAU : On écoute la requête "q" au lieu de "projectsCollection"
+onSnapshot(q, (snapshot) => {
     projectsContainer.innerHTML = '<h2>Mes projets en cours</h2>'; // Vider
 
     if (snapshot.empty) {
@@ -79,7 +88,7 @@ onSnapshot(projectsCollection, (snapshot) => {
         const project = doc.data(); // Les données
         const projectId = doc.id;   // L'ID unique
 
-        // Calcul du pourcentage (ne change pas)
+        // Calcul du pourcentage
         const today = new Date().getTime();
         const startDate = new Date(project.start).getTime();
         const endDate = new Date(project.end).getTime();
@@ -93,25 +102,18 @@ onSnapshot(projectsCollection, (snapshot) => {
         else if (totalDuration > 0) percentage = (elapsedDuration / totalDuration) * 100;
         percentage = Math.round(Math.max(0, Math.min(percentage, 100)));
 
-        // --- AJOUT : LOGIQUE D'URGENCE ---
-        // 1. Calculer les jours restants
-        const msPerDay = 1000 * 60 * 60 * 24; // Millisecondes dans un jour
+        // Logique d'urgence
+        const msPerDay = 1000 * 60 * 60 * 24;
         const remainingDays = (endDate - today) / msPerDay;
-
-        // 2. Définir si c'est urgent
         const isUrgent = (percentage < 100 && remainingDays <= 3);
-        // --- FIN DE L'AJOUT ---
-
 
         // Créer la carte HTML
         const projectCard = document.createElement('div');
-        projectCard.className = 'project-card'; // Classe de base
+        projectCard.className = 'project-card';
 
-        // --- AJOUT : Appliquer la classe d'urgence ---
         if (isUrgent) {
             projectCard.classList.add('is-urgent');
         }
-        // --- FIN DE L'AJOUT ---
 
         projectCard.innerHTML = `
             <div class="project-header">
@@ -136,15 +138,11 @@ projectsContainer.addEventListener('click', async (e) => {
     if (e.target.classList.contains('delete-btn')) {
         const idToDelete = e.target.getAttribute('data-id');
         
-        // Nouvelle syntaxe v9 pour SUPPRIMER
         try {
-            // 1. Obtenir la référence au document
             const docRef = doc(db, 'projects', idToDelete);
-            // 2. Supprimer le document
             await deleteDoc(docRef);
         } catch (error) {
             console.error("Erreur lors de la suppression: ", error);
         }
-        // Pas besoin de rafraîchir, onSnapshot le fait pour nous !
     }
 });
