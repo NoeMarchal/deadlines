@@ -13,9 +13,8 @@ import {
 
 
 // --------------- ÉTAPE 2 : CONFIGURATION FIREBASE ---------------
-// C'est votre code ! Il est au bon endroit maintenant.
 const firebaseConfig = {
-    apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg", // Cette clé est publique, pas de risque
+    apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg",
     authDomain: "mes-deadlines.firebaseapp.com",
     projectId: "mes-deadlines",
     storageBucket: "mes-deadlines.firebasestorage.app",
@@ -68,7 +67,6 @@ projectForm.addEventListener('submit', async (e) => {
 });
 
 // --- AFFICHER LES PROJETS (TEMPS RÉEL) ---
-// 'onSnapshot' est la fonction magique de temps réel
 onSnapshot(projectsCollection, (snapshot) => {
     projectsContainer.innerHTML = '<h2>Mes projets en cours</h2>'; // Vider
 
@@ -95,9 +93,26 @@ onSnapshot(projectsCollection, (snapshot) => {
         else if (totalDuration > 0) percentage = (elapsedDuration / totalDuration) * 100;
         percentage = Math.round(Math.max(0, Math.min(percentage, 100)));
 
+        // --- AJOUT : LOGIQUE D'URGENCE ---
+        // 1. Calculer les jours restants
+        const msPerDay = 1000 * 60 * 60 * 24; // Millisecondes dans un jour
+        const remainingDays = (endDate - today) / msPerDay;
+
+        // 2. Définir si c'est urgent
+        const isUrgent = (percentage < 100 && remainingDays <= 3);
+        // --- FIN DE L'AJOUT ---
+
+
         // Créer la carte HTML
         const projectCard = document.createElement('div');
-        projectCard.className = 'project-card';
+        projectCard.className = 'project-card'; // Classe de base
+
+        // --- AJOUT : Appliquer la classe d'urgence ---
+        if (isUrgent) {
+            projectCard.classList.add('is-urgent');
+        }
+        // --- FIN DE L'AJOUT ---
+
         projectCard.innerHTML = `
             <div class="project-header">
                 <h3>${project.name}</h3>

@@ -237,3 +237,18 @@ hr {
         font-size: 14px; /* Pourcentage plus petit */
     }
 }
+
+/* ---------------------------------- */
+/* ---- STYLE POUR PROJET URGENT ---- */
+/* ---------------------------------- */
+
+.project-card.is-urgent {
+    /* On force la bordure en ROUGE "Nothing" */
+    border-color: #FF0000;
+    border-width: 2px; /* Un peu plus épais pour l'alerte */
+}
+
+.project-card.is-urgent .project-header h3 {
+    /* On passe aussi le titre en rouge pour plus d'impact */
+    color: #FF0000;
+}
