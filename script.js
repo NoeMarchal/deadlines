@@ -2,9 +2,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { 
     getFirestore, collection, addDoc, onSnapshot, 
-    deleteDoc, doc, query, orderBy, where // 'where' est nouveau
+    deleteDoc, doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-// NOUVEAU: Importer les outils d'Authentification
 import { 
     getAuth, GoogleAuthProvider, signInWithPopup, 
     signOut, onAuthStateChanged 
@@ -25,8 +24,8 @@ const firebaseConfig = {
 // Initialiser Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app); // NOUVEAU: Initialiser l'Auth
-const provider = new GoogleAuthProvider(); // NOUVEAU: Créer le fournisseur Google
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 // Référence à la collection
 const projectsCollection = collection(db, 'projects');
@@ -40,16 +39,17 @@ const projectsContainer = document.getElementById('projects-container');
 const projectNameInput = document.getElementById('project-name');
 const startDateInput = document.getElementById('start-date');
 const endDateInput = document.getElementById('end-date');
+const addProjectBtn = document.getElementById('add-project-btn'); // NOUVEAU
 
-// NOUVEAU: Éléments d'Auth
+// Éléments d'Auth
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const userDetails = document.getElementById('user-details');
 
-let currentUser = null; // Variable pour stocker l'utilisateur
-let unsubscribeFromProjects = null; // Variable pour arrêter l'écouteur
+let currentUser = null; 
+let unsubscribeFromProjects = null;
 
-// NOUVEAU: Gérer les clics de connexion/déconnexion
+// Gérer les clics de connexion/déconnexion
 loginBtn.addEventListener('click', () => {
     signInWithPopup(auth, provider).catch(error => console.error(error));
 });
@@ -58,18 +58,14 @@ logoutBtn.addEventListener('click', () => {
     signOut(auth).catch(error => console.error(error));
 });
 
-// NOUVEAU: Écouteur principal de l'état d'authentification
-// C'est lui qui lance l'application
+// Écouteur principal de l'état d'authentification
 onAuthStateChanged(auth, (user) => {
     if (user) {
         // --- L'utilisateur EST connecté ---
         currentUser = user;
         uiForLoggedIn(user);
         
-        // Arrêter l'ancien écouteur s'il existe
         if (unsubscribeFromProjects) unsubscribeFromProjects();
-        
-        // Lancer l'écouteur de projets, MAIS filtré par l'ID de l'utilisateur
         unsubscribeFromProjects = listenToProjects(user.uid);
 
     } else {
@@ -77,19 +73,17 @@ onAuthStateChanged(auth, (user) => {
         currentUser = null;
         uiForLoggedOut();
         
-        // Arrêter l'écouteur de projets
         if (unsubscribeFromProjects) unsubscribeFromProjects();
-        
-        // Vider les projets
         projectsContainer.innerHTML = '<h2>Mes projets en cours</h2><p>Veuillez vous connecter pour voir vos projets.</p>';
     }
 });
 
-// --- AJOUTER UN PROJET (Modifié) ---
+// --- AJOUTER UN PROJET (La logique interne ne change pas) ---
 projectForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // NOUVEAU: Vérifier si l'utilisateur est connecté avant d'ajouter
+    // Cette vérification est maintenant fiable car le bouton
+    // n'est cliquable que si currentUser est défini.
     if (!currentUser) {
         alert("Vous devez être connecté pour ajouter un projet.");
         return;
@@ -109,7 +103,7 @@ projectForm.addEventListener('submit', async (e) => {
             name: name,
             start: start,
             end: end,
-            userId: currentUser.uid // NOUVEAU: On "marque" le projet avec l'ID de l'utilisateur
+            userId: currentUser.uid 
         });
         projectForm.reset();
     } catch (error) {
@@ -117,13 +111,12 @@ projectForm.addEventListener('submit', async (e) => {
     }
 });
 
-// --- AFFICHER LES PROJETS (Modifié) ---
+// --- AFFICHER LES PROJETS ---
 function listenToProjects(userId) {
-    // NOUVEAU: Requête filtrée et triée
     const q = query(
         projectsCollection, 
-        where("userId", "==", userId), // Ne récupérer que les projets de cet utilisateur
-        orderBy("end", "asc")           // Trier par date de fin
+        where("userId", "==", userId), 
+        orderBy("end", "asc")
     );
 
     return onSnapshot(q, (snapshot) => {
@@ -136,7 +129,7 @@ function listenToProjects(userId) {
     });
 }
 
-// NOUVEAU: Fonction séparée pour afficher un projet
+// Fonction séparée pour afficher un projet
 function renderProject(doc) {
     const project = doc.data();
     const projectId = doc.id;
@@ -170,7 +163,7 @@ function renderProject(doc) {
         <div class="project-header">
             <h3>${project.name}</h3>
             <span class="project-dates">
-                ${new Date(project.start).toLocaleDateString()} - ${new Date(project.end).toLocaleDateString()}
+                ${new Date(project.start).toLocaleString()} - ${new Date(project.end).toLocaleString()}
             </span>
         </div>
         <div class="progress-bar-container">
@@ -183,7 +176,7 @@ function renderProject(doc) {
     projectsContainer.appendChild(projectCard);
 }
 
-// --- SUPPRIMER UN PROJET (Ne change pas, mais est maintenant sécurisé) ---
+// --- SUPPRIMER UN PROJET ---
 projectsContainer.addEventListener('click', async (e) => {
     if (e.target.classList.contains('delete-btn')) {
         const idToDelete = e.target.getAttribute('data-id');
@@ -196,17 +189,19 @@ projectsContainer.addEventListener('click', async (e) => {
     }
 });
 
-// --- NOUVEAU: Fonctions de gestion de l'interface ---
+// --- Fonctions de gestion de l'interface (MODIFIÉES) ---
 function uiForLoggedIn(user) {
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
     userDetails.textContent = `Connecté: ${user.email}`;
-    projectForm.style.display = 'grid'; // Afficher le formulaire
+    projectForm.style.display = 'grid';
+    addProjectBtn.disabled = false; // <-- MODIFICATION
 }
 
 function uiForLoggedOut() {
     loginBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
     userDetails.textContent = '';
-    projectForm.style.display = 'none'; // Cacher le formulaire
+    projectForm.style.display = 'none';
+    addProjectBtn.disabled = true; // <-- MODIFICATION
 }
