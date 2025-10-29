@@ -252,3 +252,47 @@ hr {
     /* On passe aussi le titre en rouge pour plus d'impact */
     color: #FF0000;
 }
+
+/* ---------------------------------- */
+/* ---- STYLE AUTHENTIFICATION ---- */
+/* ---------------------------------- */
+#auth-container {
+    text-align: center;
+    padding-bottom: 20px;
+}
+
+#auth-container button {
+    font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
+    text-transform: uppercase;
+    font-size: 1em;
+    padding: 6px 12px;
+    border-radius: 0;
+    cursor: pointer;
+    background: transparent;
+    margin-left: 10px;
+}
+
+/* Bouton Login (style neutre) */
+#login-btn {
+    color: #FFF;
+    border: 1px solid #555;
+}
+#login-btn:hover {
+    background: #FFF;
+    color: #000;
+}
+
+/* Bouton Logout (style ROUGE alerte) */
+#logout-btn {
+    color: #FF0000;
+    border: 1px solid #FF0000;
+}
+#logout-btn:hover {
+    background: #FF0000;
+    color: #000;
+}
+
+#user-details {
+    color: #AAA;
+    font-size: 1.1em;
+}

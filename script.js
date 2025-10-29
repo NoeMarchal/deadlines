@@ -1,17 +1,14 @@
 // --------------- ÉTAPE 1 : IMPORTER LES OUTILS ---------------
-// Outils de base de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-// Outils de la base de données (Firestore)
 import { 
-    getFirestore,     // L'usine à base de données
-    collection,     // Référence à une collection
-    addDoc,         // Pour ajouter un document
-    onSnapshot,     // Pour écouter en temps réel
-    deleteDoc,      // Pour supprimer un document
-    doc,            // Référence à un document précis
-    query,          // NOUVEAU : Pour créer une requête
-    orderBy         // NOUVEAU : Pour trier les résultats
+    getFirestore, collection, addDoc, onSnapshot, 
+    deleteDoc, doc, query, orderBy, where // 'where' est nouveau
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+// NOUVEAU: Importer les outils d'Authentification
+import { 
+    getAuth, GoogleAuthProvider, signInWithPopup, 
+    signOut, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
 
 // --------------- ÉTAPE 2 : CONFIGURATION FIREBASE ---------------
@@ -25,11 +22,13 @@ const firebaseConfig = {
     measurementId: "G-3TTTRJC3QD"
 };
 
-// Initialiser Firebase et la base de données
+// Initialiser Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app); // Connexion à la base de données
+const db = getFirestore(app);
+const auth = getAuth(app); // NOUVEAU: Initialiser l'Auth
+const provider = new GoogleAuthProvider(); // NOUVEAU: Créer le fournisseur Google
 
-// Référence à notre collection "projects"
+// Référence à la collection
 const projectsCollection = collection(db, 'projects');
 
 
@@ -42,9 +41,59 @@ const projectNameInput = document.getElementById('project-name');
 const startDateInput = document.getElementById('start-date');
 const endDateInput = document.getElementById('end-date');
 
-// --- AJOUTER UN PROJET ---
+// NOUVEAU: Éléments d'Auth
+const loginBtn = document.getElementById('login-btn');
+const logoutBtn = document.getElementById('logout-btn');
+const userDetails = document.getElementById('user-details');
+
+let currentUser = null; // Variable pour stocker l'utilisateur
+let unsubscribeFromProjects = null; // Variable pour arrêter l'écouteur
+
+// NOUVEAU: Gérer les clics de connexion/déconnexion
+loginBtn.addEventListener('click', () => {
+    signInWithPopup(auth, provider).catch(error => console.error(error));
+});
+
+logoutBtn.addEventListener('click', () => {
+    signOut(auth).catch(error => console.error(error));
+});
+
+// NOUVEAU: Écouteur principal de l'état d'authentification
+// C'est lui qui lance l'application
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // --- L'utilisateur EST connecté ---
+        currentUser = user;
+        uiForLoggedIn(user);
+        
+        // Arrêter l'ancien écouteur s'il existe
+        if (unsubscribeFromProjects) unsubscribeFromProjects();
+        
+        // Lancer l'écouteur de projets, MAIS filtré par l'ID de l'utilisateur
+        unsubscribeFromProjects = listenToProjects(user.uid);
+
+    } else {
+        // --- L'utilisateur N'EST PAS connecté ---
+        currentUser = null;
+        uiForLoggedOut();
+        
+        // Arrêter l'écouteur de projets
+        if (unsubscribeFromProjects) unsubscribeFromProjects();
+        
+        // Vider les projets
+        projectsContainer.innerHTML = '<h2>Mes projets en cours</h2><p>Veuillez vous connecter pour voir vos projets.</p>';
+    }
+});
+
+// --- AJOUTER UN PROJET (Modifié) ---
 projectForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // NOUVEAU: Vérifier si l'utilisateur est connecté avant d'ajouter
+    if (!currentUser) {
+        alert("Vous devez être connecté pour ajouter un projet.");
+        return;
+    }
 
     const name = projectNameInput.value;
     const start = startDateInput.value;
@@ -55,13 +104,12 @@ projectForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    // Nouvelle syntaxE v9 pour AJOUTER
     try {
         await addDoc(projectsCollection, {
             name: name,
             start: start,
-            end: end
-            // Firebase ajoute automatiquement un timestamp, mais trier par "end" est mieux
+            end: end,
+            userId: currentUser.uid // NOUVEAU: On "marque" le projet avec l'ID de l'utilisateur
         });
         projectForm.reset();
     } catch (error) {
@@ -69,75 +117,76 @@ projectForm.addEventListener('submit', async (e) => {
     }
 });
 
-// --- AFFICHER LES PROJETS (TEMPS RÉEL ET TRIÉS) ---
+// --- AFFICHER LES PROJETS (Modifié) ---
+function listenToProjects(userId) {
+    // NOUVEAU: Requête filtrée et triée
+    const q = query(
+        projectsCollection, 
+        where("userId", "==", userId), // Ne récupérer que les projets de cet utilisateur
+        orderBy("end", "asc")           // Trier par date de fin
+    );
 
-// NOUVEAU : On crée une requête qui trie les projets par date de fin ("end")
-// "asc" = ascendant (du plus proche au plus lointain)
-const q = query(projectsCollection, orderBy("end", "asc"));
+    return onSnapshot(q, (snapshot) => {
+        projectsContainer.innerHTML = '<h2>Mes projets en cours</h2>';
+        if (snapshot.empty) {
+            projectsContainer.innerHTML += '<p>Aucun projet pour le moment.</p>';
+            return;
+        }
+        snapshot.forEach(doc => renderProject(doc));
+    });
+}
 
-// NOUVEAU : On écoute la requête "q" au lieu de "projectsCollection"
-onSnapshot(q, (snapshot) => {
-    projectsContainer.innerHTML = '<h2>Mes projets en cours</h2>'; // Vider
+// NOUVEAU: Fonction séparée pour afficher un projet
+function renderProject(doc) {
+    const project = doc.data();
+    const projectId = doc.id;
 
-    if (snapshot.empty) {
-        projectsContainer.innerHTML += '<p>Aucun projet pour le moment.</p>';
-        return;
+    // Logique de pourcentage
+    const today = new Date().getTime();
+    const startDate = new Date(project.start).getTime();
+    const endDate = new Date(project.end).getTime();
+    if (isNaN(startDate) || isNaN(endDate)) return;
+    const totalDuration = endDate - startDate;
+    const elapsedDuration = today - startDate;
+    let percentage = 0;
+    if (today < startDate) percentage = 0;
+    else if (today > endDate) percentage = 100;
+    else if (totalDuration > 0) percentage = (elapsedDuration / totalDuration) * 100;
+    percentage = Math.round(Math.max(0, Math.min(percentage, 100)));
+
+    // Logique d'urgence
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const remainingDays = (endDate - today) / msPerDay;
+    const isUrgent = (percentage < 100 && remainingDays <= 3);
+
+    // Création de la carte
+    const projectCard = document.createElement('div');
+    projectCard.className = 'project-card';
+    if (isUrgent) {
+        projectCard.classList.add('is-urgent');
     }
 
-    snapshot.forEach((doc) => {
-        const project = doc.data(); // Les données
-        const projectId = doc.id;   // L'ID unique
-
-        // Calcul du pourcentage
-        const today = new Date().getTime();
-        const startDate = new Date(project.start).getTime();
-        const endDate = new Date(project.end).getTime();
-        if (isNaN(startDate) || isNaN(endDate)) return;
-
-        const totalDuration = endDate - startDate;
-        const elapsedDuration = today - startDate;
-        let percentage = 0;
-        if (today < startDate) percentage = 0;
-        else if (today > endDate) percentage = 100;
-        else if (totalDuration > 0) percentage = (elapsedDuration / totalDuration) * 100;
-        percentage = Math.round(Math.max(0, Math.min(percentage, 100)));
-
-        // Logique d'urgence
-        const msPerDay = 1000 * 60 * 60 * 24;
-        const remainingDays = (endDate - today) / msPerDay;
-        const isUrgent = (percentage < 100 && remainingDays <= 3);
-
-        // Créer la carte HTML
-        const projectCard = document.createElement('div');
-        projectCard.className = 'project-card';
-
-        if (isUrgent) {
-            projectCard.classList.add('is-urgent');
-        }
-
-        projectCard.innerHTML = `
-            <div class="project-header">
-                <h3>${project.name}</h3>
-                <span class="project-dates">
-                    ${new Date(project.start).toLocaleDateString()} - ${new Date(project.end).toLocaleDateString()}
-                </span>
+    projectCard.innerHTML = `
+        <div class="project-header">
+            <h3>${project.name}</h3>
+            <span class="project-dates">
+                ${new Date(project.start).toLocaleDateString()} - ${new Date(project.end).toLocaleDateString()}
+            </span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-inner" style="width: ${percentage}%;">
+                ${percentage}%
             </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-inner" style="width: ${percentage}%;">
-                    ${percentage}%
-                </div>
-            </div>
-            <button class="delete-btn" data-id="${projectId}">Supprimer</button>
-        `;
-        projectsContainer.appendChild(projectCard);
-    });
-});
+        </div>
+        <button class="delete-btn" data-id="${projectId}">Supprimer</button>
+    `;
+    projectsContainer.appendChild(projectCard);
+}
 
-// --- SUPPRIMER UN PROJET ---
+// --- SUPPRIMER UN PROJET (Ne change pas, mais est maintenant sécurisé) ---
 projectsContainer.addEventListener('click', async (e) => {
     if (e.target.classList.contains('delete-btn')) {
         const idToDelete = e.target.getAttribute('data-id');
-        
         try {
             const docRef = doc(db, 'projects', idToDelete);
             await deleteDoc(docRef);
@@ -146,3 +195,18 @@ projectsContainer.addEventListener('click', async (e) => {
         }
     }
 });
+
+// --- NOUVEAU: Fonctions de gestion de l'interface ---
+function uiForLoggedIn(user) {
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    userDetails.textContent = `Connecté: ${user.email}`;
+    projectForm.style.display = 'grid'; // Afficher le formulaire
+}
+
+function uiForLoggedOut() {
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    userDetails.textContent = '';
+    projectForm.style.display = 'none'; // Cacher le formulaire
+}
