@@ -115,22 +115,60 @@
      }); 
 
      // --- AFFICHER LES PROJETS --- 
+// --- AFFICHER LES PROJETS --- 
      function listenToProjects(userId) { 
          const q = query( 
              projectsCollection,  
              where("userId", "==", userId),  
-             orderBy("end", "asc") 
+             orderBy("end", "asc") // On garde ce tri, il est parfait
          ); 
 
          return onSnapshot(q, (snapshot) => { 
              projectsContainer.innerHTML = '<h2>Mes projets en cours</h2>'; 
+             
              if (snapshot.empty) { 
                  projectsContainer.innerHTML += '<p>Aucun projet pour le moment.</p>'; 
                  return; 
              } 
-             snapshot.forEach(doc => renderProject(doc)); 
+             
+             // --- NOUVELLE LOGIQUE DE TRI ---
+             
+             const pendingProjects = [];
+             const completedProjects = [];
+
+             // 1. On sépare les projets en deux listes
+             snapshot.forEach(doc => {
+                 // On utilise (doc.data().status || 'pending') pour gérer les anciens projets
+                 if ((doc.data().status || 'pending') === 'completed') {
+                     completedProjects.push(doc);
+                 } else {
+                     pendingProjects.push(doc);
+                 }
+             });
+
+             // 2. On affiche d'abord les projets EN COURS
+             if (pendingProjects.length === 0) {
+                 projectsContainer.innerHTML += '<p>Aucun projet en cours pour le moment.</p>';
+             } else {
+                 pendingProjects.forEach(doc => renderProject(doc));
+             }
+
+             // 3. On affiche les projets TERMINÉS ensuite
+             if (completedProjects.length > 0) {
+                 
+                 // Bonus : Ajoutons un titre pour séparer les sections
+                 const separator = document.createElement('h2');
+                 separator.textContent = 'Projets terminés';
+                 separator.style.borderTop = '1px solid #333'; // Style du H2
+                 separator.style.paddingTop = '20px';
+                 separator.style.marginTop = '40px';
+                 projectsContainer.appendChild(separator);
+                 
+                 completedProjects.forEach(doc => renderProject(doc));
+             }
+             // --- FIN DE LA NOUVELLE LOGIQUE ---
          }); 
-     } 
+     }
 
      // Fonction séparée pour afficher un projet (MODIFIÉE)
      function renderProject(doc) { 
