@@ -37,8 +37,13 @@
      // --------------- ÉTAPE 3 : LOGIQUE DE L'APPLICATION --------------- 
 
      // Récupérer les éléments du DOM 
-     const projectForm = document.getElementById('project-form'); 
-     const projectsContainer = document.getElementById('projects-container'); 
+     const projectForm = document.getElementById('project-form');
+     
+     // MODIFICATION : Nouveaux sélecteurs pour les listes
+     const pendingList = document.getElementById('pending-projects-list');
+     const completedList = document.getElementById('completed-projects-list');
+     const projectsGrid = document.getElementById('projects-container'); // Pour l'écouteur de clic
+
      const projectNameInput = document.getElementById('project-name'); 
      const startDateInput = document.getElementById('start-date'); 
      const endDateInput = document.getElementById('end-date'); 
@@ -78,7 +83,9 @@
               
              if (unsubscribeFromProjects) unsubscribeFromProjects(); 
 
-             projectsContainer.innerHTML = '<h2>Mes projets en cours</h2><p>Veuillez vous connecter pour voir vos projets.</p>'; 
+             // MODIFICATION : On vide les deux listes
+             pendingList.innerHTML = '<p>Veuillez vous connecter pour voir vos projets.</p>';
+             completedList.innerHTML = '';
          } 
      }); 
 
@@ -106,7 +113,7 @@
                  start: start, 
                  end: end, 
                  userId: currentUser.uid,
-                 status: 'pending' // <-- MODIFICATION : Ajout du statut par défaut
+                 status: 'pending' 
              }); 
              projectForm.reset(); 
          } catch (error) { 
@@ -115,82 +122,71 @@
      }); 
 
      // --- AFFICHER LES PROJETS --- 
-// --- AFFICHER LES PROJETS --- 
+     // MODIFICATION : Cette fonction trie maintenant dans les deux colonnes
      function listenToProjects(userId) { 
          const q = query( 
              projectsCollection,  
              where("userId", "==", userId),  
-             orderBy("end", "asc") // On garde ce tri, il est parfait
+             orderBy("end", "asc")
          ); 
 
          return onSnapshot(q, (snapshot) => { 
-             projectsContainer.innerHTML = '<h2>Mes projets en cours</h2>'; 
+             // 1. On vide les listes
+             pendingList.innerHTML = '';
+             completedList.innerHTML = '';
              
+             let pendingCount = 0;
+             let completedCount = 0;
+
              if (snapshot.empty) { 
-                 projectsContainer.innerHTML += '<p>Aucun projet pour le moment.</p>'; 
+                 pendingList.innerHTML = '<p>Aucun projet pour le moment.</p>'; 
+                 completedList.innerHTML = '<p>Aucun projet terminé.</p>';
                  return; 
              } 
              
-             // --- NOUVELLE LOGIQUE DE TRI ---
-             
-             const pendingProjects = [];
-             const completedProjects = [];
-
-             // 1. On sépare les projets en deux listes
+             // 2. On boucle et on trie
              snapshot.forEach(doc => {
-                 // On utilise (doc.data().status || 'pending') pour gérer les anciens projets
-                 if ((doc.data().status || 'pending') === 'completed') {
-                     completedProjects.push(doc);
+                 const status = doc.data().status || 'pending';
+                 
+                 // 3. On crée la carte (la fonction renvoie l'élément)
+                 const projectCard = renderProject(doc);
+
+                 // 4. On l'ajoute à la bonne liste
+                 if (status === 'completed') {
+                     completedList.appendChild(projectCard);
+                     completedCount++;
                  } else {
-                     pendingProjects.push(doc);
+                     pendingList.appendChild(projectCard);
+                     pendingCount++;
                  }
              });
 
-             // 2. On affiche d'abord les projets EN COURS
-             if (pendingProjects.length === 0) {
-                 projectsContainer.innerHTML += '<p>Aucun projet en cours pour le moment.</p>';
-             } else {
-                 pendingProjects.forEach(doc => renderProject(doc));
+             // 5. Gérer les états vides séparément
+             if (pendingCount === 0) {
+                 pendingList.innerHTML = '<p>Aucun projet en cours pour le moment.</p>';
              }
-
-             // 3. On affiche les projets TERMINÉS ensuite
-             if (completedProjects.length > 0) {
-                 
-                 // Bonus : Ajoutons un titre pour séparer les sections
-                 const separator = document.createElement('h2');
-                 separator.textContent = 'Projets terminés';
-                 separator.style.borderTop = '1px solid #333'; // Style du H2
-                 separator.style.paddingTop = '20px';
-                 separator.style.marginTop = '40px';
-                 projectsContainer.appendChild(separator);
-                 
-                 completedProjects.forEach(doc => renderProject(doc));
+             if (completedCount === 0) {
+                 completedList.innerHTML = '<p>Aucun projet terminé.</p>';
              }
-             // --- FIN DE LA NOUVELLE LOGIQUE ---
          }); 
      }
 
-     // Fonction séparée pour afficher un projet (MODIFIÉE)
+     // --- CRÉER UNE CARTE DE PROJET ---
+     // MODIFICATION : Cette fonction RENVOIE la carte au lieu de l'ajouter
      function renderProject(doc) { 
          const project = doc.data(); 
          const projectId = doc.id; 
 
-         // Gère les anciens projets qui n'ont pas de statut
          const status = project.status || 'pending';
-
-         // Logique de pourcentage 
          const today = new Date().getTime(); 
          const startDate = new Date(project.start).getTime(); 
          const endDate = new Date(project.end).getTime(); 
          if (isNaN(startDate) || isNaN(endDate)) return; 
          
          let percentage = 0;
-         
-         // Si le projet est terminé, la barre est à 100%
          if (status === 'completed') {
              percentage = 100;
          } else {
-             // Sinon, on calcule
              const totalDuration = endDate - startDate; 
              const elapsedDuration = today - startDate; 
              if (today < startDate) percentage = 0; 
@@ -199,12 +195,11 @@
              percentage = Math.round(Math.max(0, Math.min(percentage, 100))); 
          }
 
-         // Logique d'urgence : ne s'applique que si le projet est 'pending'
          const msPerDay = 1000 * 60 * 60 * 24; 
          const remainingDays = (endDate - today) / msPerDay; 
          const isUrgent = (status === 'pending' && percentage < 100 && remainingDays <= 3); 
 
-         // Création de la carte 
+         // Création de la carte (identique à avant)
          const projectCard = document.createElement('div'); 
          projectCard.className = 'project-card'; 
          if (isUrgent) { 
@@ -214,7 +209,6 @@
              projectCard.classList.add('is-completed');
          }
 
-         // Préparation des boutons d'action
          const projectActionsHTML = `
              <div class="project-actions">
                  ${status === 'pending' ? 
@@ -225,10 +219,8 @@
              </div>
          `;
          
-         // Classe pour la barre de progression
          const progressInnerClass = status === 'completed' ? 'is-completed' : '';
 
-         // HTML de la carte
          projectCard.innerHTML = ` 
              <div class="project-header"> 
                  <h3>${project.name}</h3> 
@@ -243,11 +235,14 @@
              </div> 
              ${projectActionsHTML}
          `; 
-         projectsContainer.appendChild(projectCard); 
+         
+         // MODIFICATION : On RENVOIE l'élément au lieu de l'ajouter
+         return projectCard; 
      } 
 
      // --- GÉRER LES ACTIONS (SUPPRIMER / TERMINER) --- 
-     projectsContainer.addEventListener('click', async (e) => { 
+     // MODIFICATION : L'écouteur est sur la GRILLE parente
+     projectsGrid.addEventListener('click', async (e) => { 
          
          // Clic sur SUPPRIMER
          if (e.target.classList.contains('delete-btn')) { 
@@ -265,7 +260,7 @@
              } 
          }
 
-         // Clic sur TERMINER (Nouveau)
+         // Clic sur TERMINER
          if (e.target.classList.contains('complete-btn')) {
              const idToComplete = e.target.getAttribute('data-id');
              try {
@@ -273,7 +268,6 @@
                  await updateDoc(docRef, {
                      status: 'completed'
                  });
-                 // onSnapshot s'occupera de rafraîchir l'affichage
              } catch (error) {
                  console.error("Erreur lors de la mise à jour du statut: ", error);
              }
