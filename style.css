@@ -351,3 +351,50 @@ hr {
  .project-card.is-completed.is-urgent .project-header h3 { 
      color: #777; 
  }
+
+ /* ---------------------------------- */ 
+ /* ---- STYLE DU TABLEAU DE BORD ---- */ 
+ /* ---------------------------------- */ 
+
+ /* On transforme le conteneur principal en grille */
+ #projects-container {
+     display: grid;
+     grid-template-columns: 1fr 1fr; /* Deux colonnes de taille égale */
+     gap: 20px; /* Espace entre les deux colonnes */
+     
+     /* On enlève l'ancienne bordure/padding de la section */
+     border: none;
+     padding: 0;
+ }
+
+ /* Style pour le titre de chaque colonne */
+ .project-column h2 {
+    color: #FFF;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    margin-top: 0; /* On enlève la marge du haut */
+ }
+
+ /* On ré-applique le style "pas de projet" aux nouvelles listes */
+ #pending-projects-list p,
+ #completed-projects-list p {
+     color: #777;
+     font-size: 1.1em;
+ }
+
+
+ /* ---------------------------------- */ 
+ /* ---- RESPONSIVE (COLONNES)     ---- */ 
+ /* ---------------------------------- */ 
+
+ @media (max-width: 800px) {
+     /* Sur les écrans plus petits, on repasse à UNE seule colonne */
+     #projects-container {
+         grid-template-columns: 1fr; 
+     }
+
+     /* On ajoute un espace pour séparer les listes sur mobile */
+     #completed-column {
+         margin-top: 40px;
+     }
+ }
