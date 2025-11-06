@@ -127,12 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- AFFICHER LES PROJETS ACTIFS ---
-    function listenToProjects(userId) {
-        // MODIFIÉ : Ajout de where("isArchived", "==", false)
+function listenToProjects(userId) {
+        // MODIFIÉ : On utilise "!=" pour inclure les anciens projets
         const q = query(
             projectsCollection, 
             where("userId", "==", userId),
-            where("isArchived", "==", false), // <-- NOUVEAU
+            where("isArchived", "!=", true), // <-- VOICI LA CORRECTION
             orderBy("end", "asc")
         );
 
