@@ -21,6 +21,17 @@
      measurementId: "G-3TTTRJC3QD" 
  }; 
 
+     const userDetails = document.getElementById('user-details'); 
+     
+     // NOUVEAU : Éléments pour les stats
+     const projectStatsDiv = document.getElementById('project-stats');
+     const completedCountSpan = document.getElementById('completed-count');
+     const totalCountSpan = document.getElementById('total-count');
+     // Fin du nouveau
+     
+     let currentUser = null;  
+     let unsubscribeFromProjects = null; 
+    
  // Initialiser Firebase 
  const app = initializeApp(firebaseConfig); 
  const db = getFirestore(app); 
@@ -123,6 +134,7 @@
 
      // --- AFFICHER LES PROJETS --- 
      // MODIFICATION : Cette fonction trie maintenant dans les deux colonnes
+     // --- AFFICHER LES PROJETS --- 
      function listenToProjects(userId) { 
          const q = query( 
              projectsCollection,  
@@ -131,43 +143,53 @@
          ); 
 
          return onSnapshot(q, (snapshot) => { 
-             // 1. On vide les listes
              pendingList.innerHTML = '';
              completedList.innerHTML = '';
              
              let pendingCount = 0;
              let completedCount = 0;
 
+             // NOUVEAU : Compter le nombre total (pour les stats)
+             let totalProjects = snapshot.size;
+
              if (snapshot.empty) { 
                  pendingList.innerHTML = '<p>Aucun projet pour le moment.</p>'; 
                  completedList.innerHTML = '<p>Aucun projet terminé.</p>';
+                 // NOUVEAU : Mettre à jour les stats même si vide
+                 completedCountSpan.textContent = 0;
+                 totalCountSpan.textContent = 0;
                  return; 
              } 
              
-             // 2. On boucle et on trie
              snapshot.forEach(doc => {
                  const status = doc.data().status || 'pending';
-                 
-                 // 3. On crée la carte (la fonction renvoie l'élément)
-                 const projectCard = renderProject(doc);
+                 const projectCard = renderProject(doc); 
 
-                 // 4. On l'ajoute à la bonne liste
-                 if (status === 'completed') {
-                     completedList.appendChild(projectCard);
-                     completedCount++;
+                 if (projectCard) {
+                     if (status === 'completed') {
+                         completedList.appendChild(projectCard);
+                         completedCount++;
+                     } else {
+                         pendingList.appendChild(projectCard);
+                         pendingCount++;
+                     }
                  } else {
-                     pendingList.appendChild(projectCard);
-                     pendingCount++;
+                     console.error("Impossible d'afficher un projet (dates invalides ?):", doc.data());
+                     // NOUVEAU : Si une carte ne peut pas être rendue, elle ne compte pas dans le total affiché
+                     totalProjects--; 
                  }
              });
 
-             // 5. Gérer les états vides séparément
              if (pendingCount === 0) {
                  pendingList.innerHTML = '<p>Aucun projet en cours pour le moment.</p>';
              }
              if (completedCount === 0) {
                  completedList.innerHTML = '<p>Aucun projet terminé.</p>';
              }
+
+             // NOUVEAU : Mise à jour des spans de statistiques
+             completedCountSpan.textContent = completedCount;
+             totalCountSpan.textContent = totalProjects;
          }); 
      }
 
@@ -275,6 +297,7 @@
      }); 
 
      // --- Fonctions de gestion de l'interface --- 
+// --- Fonctions de gestion de l'interface --- 
      function uiForLoggedIn(user) { 
          loginBtn.style.display = 'none'; 
          logoutBtn.style.display = 'inline-block'; 
@@ -282,6 +305,9 @@
          projectForm.style.display = 'grid'; 
           
          if (addProjectBtn) addProjectBtn.disabled = false; 
+
+         // NOUVEAU : Afficher les stats
+         projectStatsDiv.style.display = 'flex'; // Utiliser flex pour l'alignement interne
      } 
 
      function uiForLoggedOut() { 
@@ -291,6 +317,9 @@
          projectForm.style.display = 'none'; 
           
          if (addProjectBtn) addProjectBtn.disabled = true; 
-     } 
+
+         // NOUVEAU : Cacher les stats
+         projectStatsDiv.style.display = 'none';
+     }
 
  }); // <-- FIN DU 'DOMContentLoaded'

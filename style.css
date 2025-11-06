@@ -434,3 +434,26 @@ hr {
          margin-top: 40px;
      }
  }
+
+ /* Style du bloc de statistiques */
+#project-stats {
+    display: flex; /* Pour aligner les nombres */
+    align-items: center;
+    gap: 5px; /* Petit espace entre les éléments */
+    color: #00FF00; /* Vert pour les chiffres clés */
+    font-weight: 700;
+    font-size: 1.1em;
+    border: 1px solid #00FF00; /* Bordure verte pour le mettre en valeur */
+    padding: 4px 8px;
+    border-radius: 0;
+    margin-left: 20px; /* Espace à gauche pour le séparer des user-details */
+}
+
+/* Sur mobile, on peut réduire la taille */
+@media (max-width: 600px) {
+    #project-stats {
+        font-size: 0.9em;
+        padding: 3px 6px;
+        margin-left: 10px;
+    }
+}
