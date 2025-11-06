@@ -283,7 +283,7 @@ hr {
 }
 
 /* Bouton Logout (style ROUGE alerte) */
-#logout-btn {
+#logout-btn {           
     color: #FF0000;
     border: 1px solid #FF0000;
 }
@@ -295,4 +295,63 @@ hr {
 #user-details {
     color: #AAA;
     font-size: 1.1em;
+}
+
+#archived-container h2 {
+    color: #AAA; /* Titre en gris pour moins d'importance */
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+/* Style pour les cartes de projet archivées (moins visibles) */
+.project-card.is-archived {
+    opacity: 0.6;
+    border-style: dashed; /* Bordure en pointillés */
+    border-color: #555;
+}
+
+/* On cache la barre de progression pour les archives */
+.project-card.is-archived .progress-bar-container {
+    display: none; 
+}
+
+/* On barre le titre des projets archivés */
+.project-card.is-archived .project-header h3 {
+    color: #AAA;
+    text-decoration: line-through; 
+}
+
+/* Style pour les nouveaux boutons (Archiver / Restaurer) */
+.archive-btn, .restore-btn {
+    font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
+    background-color: transparent;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 0;
+    margin-top: 15px;
+    margin-right: 10px; /* Espace entre les boutons */
+    font-size: 0.9em;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+/* Bouton Archiver (cyan pour une action neutre) */
+.archive-btn {
+    color: #00FFFF;
+    border-color: #00FFFF;
+}
+.archive-btn:hover {
+    background: #00FFFF;
+    color: #000;
+}
+
+/* Bouton Restaurer (vert pour une action positive) */
+.restore-btn {
+    color: #00FF00; 
+    border-color: #00FF00;
+}
+.restore-btn:hover {
+    background: #00FF00;
+    color: #000;
 }
