@@ -296,3 +296,59 @@ hr {
     color: #AAA;
     font-size: 1.1em;
 }
+
+/* Style de la barre de progression VERTE */ 
+ .progress-bar-inner.is-completed { 
+     background-color: #00FF00; /* Un vert "pixel" vif */ 
+     color: #000000; /* Texte noir pour la lisibilité */ 
+ } 
+
+ /* Conteneur pour les boutons d'action */ 
+ .project-actions { 
+     margin-top: 15px; 
+     display: flex; 
+     gap: 10px; 
+     align-items: center; 
+ } 
+
+ /* Style du nouveau bouton "Terminer" (style VERT) */ 
+ .complete-btn { 
+     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace; 
+     background-color: transparent; 
+     color: #00FF00; /* Vert vif */ 
+     border: 1px solid #00FF00; 
+     padding: 5px 10px; 
+     cursor: pointer; 
+     border-radius: 0; 
+     font-size: 0.9em; 
+     transition: all 0.2s; 
+     text-transform: uppercase; 
+ } 
+
+ .complete-btn:hover { 
+     background-color: #00FF00; 
+     color: #000000; 
+ } 
+
+ /* Style du texte "TERMINÉ" */ 
+ .project-completed-text { 
+     font-size: 1em; 
+     font-weight: 700; 
+     color: #00FF00; /* Vert vif */ 
+     margin-right: 10px; 
+ } 
+
+ /* On grise la carte du projet terminé */ 
+ .project-card.is-completed { 
+     border-color: #333; /* Retour à une bordure normale */ 
+ } 
+
+ .project-card.is-completed .project-header h3, 
+ .project-card.is-completed .project-dates { 
+     color: #777; /* On grise le texte */ 
+ } 
+
+ /* On s'assure que le titre "urgent" n'est plus rouge */ 
+ .project-card.is-completed.is-urgent .project-header h3 { 
+     color: #777; 
+ }
