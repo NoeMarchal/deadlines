@@ -255,47 +255,83 @@ hr {
 /* ---------------------------------- */
 /* ---- STYLE AUTHENTIFICATION ---- */
 /* ---------------------------------- */
+/* ---------------------------------- */
+/* ---- STYLE AUTHENTIFICATION (AMÉLIORÉ) ---- */
+/* ---------------------------------- */
 #auth-container {
-    text-align: center;
-    padding-bottom: 20px;
+    text-align: right; /* Aligner à droite par défaut */
+    padding: 10px 20px; /* Moins de padding */
+    width: 100%; /* Occupe toute la largeur */
+    box-sizing: border-box; /* Inclure le padding dans la largeur */
+    position: sticky; /* Reste en haut lors du défilement */
+    top: 0;
+    background-color: #000; /* Fond noir pour qu'il n'y ait pas de "trou" */
+    z-index: 1000; /* Assure qu'il est au-dessus des autres éléments */
+    border-bottom: 1px solid #111; /* Petite ligne discrète en bas */
+    display: flex; /* Utilise flexbox pour l'alignement */
+    justify-content: flex-end; /* Aligne le contenu à droite */
+    align-items: center; /* Centre verticalement */
+    gap: 15px; /* Espace entre les éléments */
 }
 
 #auth-container button {
     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
     text-transform: uppercase;
-    font-size: 1em;
-    padding: 6px 12px;
+    font-size: 0.9em; /* Plus petit */
+    padding: 6px 15px; /* Plus grand horizontalement */
     border-radius: 0;
     cursor: pointer;
     background: transparent;
-    margin-left: 10px;
+    transition: all 0.2s;
+    line-height: 1; /* Assure un bon alignement du texte */
 }
 
-/* Bouton Login (style neutre) */
-#login-btn {
-    color: #FFF;
-    border: 1px solid #555;
+/* Style des boutons génériques (plus discrets) */
+#login-btn, #logout-btn {
+    color: #AAA; /* Gris clair */
+    border: 1px solid #555; /* Bordure gris moyen */
 }
-#login-btn:hover {
-    background: #FFF;
+
+#login-btn:hover, #logout-btn:hover {
+    background: #555; /* Inversion de couleur au survol */
     color: #000;
 }
 
-/* Bouton Logout (style ROUGE alerte) */
+#user-details {
+    color: #AAA;
+    font-size: 1em; /* Ajusté */
+    margin-right: 0; /* Plus de marge ici, flexbox gère ça */
+}
+
+/* Style spécifique pour le logout quand l'utilisateur est connecté */
 #logout-btn {
+    border-color: #FF0000; /* La déconnexion reste un peu plus "sérieuse" */
     color: #FF0000;
-    border: 1px solid #FF0000;
 }
 #logout-btn:hover {
     background: #FF0000;
     color: #000;
 }
 
-#user-details {
-    color: #AAA;
-    font-size: 1.1em;
+/* Media query pour le mobile */
+@media (max-width: 600px) {
+    #auth-container {
+        padding: 8px 10px;
+        gap: 10px;
+    }
+    #auth-container button {
+        font-size: 0.8em;
+        padding: 4px 10px;
+    }
+    #user-details {
+        font-size: 0.9em;
+        /* Peut-être couper l'email si trop long */
+        max-width: 120px; 
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
 }
-
 /* Style de la barre de progression VERTE */ 
  .progress-bar-inner.is-completed { 
      background-color: #00FF00; /* Un vert "pixel" vif */ 
