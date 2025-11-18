@@ -42,12 +42,12 @@ const projectsCollection = collection(db, "projects");
 // --- CONFIGURATION DU JEU (XP & ARGENT) ---
 const GAME_CONFIG = {
     xpReward: 500,      // XP gagnée par projet
-    coinReward: 100,    // Argent gagné par projet (NOUVEAU)
-    levelStep: 1300     // XP nécessaire par niveau
+    coinReward: 700,    // Argent gagné par projet (NOUVEAU)
+    levelStep: 800     // XP nécessaire par niveau
 };
 
 const PET_CONFIG = {
-    costFeed: 10,       // Coût en PIÈCES pour nourrir
+    costFeed: 5,       // Coût en PIÈCES pour nourrir
     xpGain: 50,         // XP gagné par le Pet quand on le nourrit
     costRename: 50,     // Coût en PIÈCES pour renommer
     stages: [
