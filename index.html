@@ -44,38 +44,67 @@
       <h1>My Deadlines</h1>
     </header>
 
-    <main>
-      <section id="form-container">
-        <h2>Ajouter un projet</h2>
-        <form id="project-form">
-          <input type="text" id="project-name" placeholder="Nom du projet"
-            required />
-          <label for="start-date">Début :</label>
-          <input type="date" id="start-date" required />
-          <label for="end-date">Fin :</label>
-          <input type="date" id="end-date" required />
-          <button type="submit" id="add-project-btn" disabled>Ajouter</button>
-        </form>
-      </section>
+<main>
+    <div class="dashboard-container">
+        
+        <aside class="left-sidebar">
+            <section id="companion-section" class="project-card" style="display:none;">
+                <div class="companion-header">
+                    <h2>Compagnon</h2>
+                    <span id="pet-level-display">NIV 1</span>
+                </div>
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <span id="pet-name-display" style="color: #fff; font-weight: bold;">...</span>
+                </div>
 
-      <hr />
-      <section id="projects-container">
+                <div id="pet-stage">
+                    <pre id="pet-visual">( o_o )</pre>
+                </div>
 
-        <div class="project-column" id="pending-column">
-          <h2>Mes projets en cours</h2>
-          <div id="pending-projects-list">
-          </div>
+                <div class="pet-status-bar">
+                    <div id="pet-xp-bar-inner" style="width: 0%"></div>
+                </div>
+                
+                <div class="pet-actions">
+                    <button id="feed-btn" class="pet-btn">⚡ Nourrir (50 XP)</button>
+                    <button id="rename-btn" class="pet-btn">✎ Nom (200 XP)</button>
+                </div>
+                
+                <div id="pet-message">En attente...</div>
+            </section>
+        </aside>
+
+        <div class="right-content">
+            <section id="form-container">
+                <h2>Ajouter un projet</h2>
+                <form id="project-form">
+                    <input type="text" id="project-name" placeholder="Nom du projet" required />
+                    <label for="start-date">Début :</label>
+                    <input type="date" id="start-date" required />
+                    <label for="end-date">Fin :</label>
+                    <input type="date" id="end-date" required />
+                    <button type="submit" id="add-project-btn" disabled>Ajouter</button>
+                </form>
+            </section>
+
+            <hr />
+            
+            <section id="projects-container">
+                <div class="project-column" id="pending-column">
+                    <h2>Mes projets en cours</h2>
+                    <div id="pending-projects-list"></div>
+                </div>
+
+                <div class="project-column" id="archive-link-column">
+                    <h2>Archives</h2>
+                    <a href="archives.html" id="archive-link-btn">
+                        Voir les projets terminés
+                    </a>
+                </div>
+            </section>
         </div>
-
-        <div class="project-column" id="archive-link-column">
-          <h2>Archives</h2>
-          <a href="archives.html" id="archive-link-btn">
-            Voir les projets terminés
-          </a>
-        </div>
-
-      </section>
-    </main> <footer>
+    </div>
+</main><footer>
       <div id="footer-content">
         <span>&copy; 2025 Moust4ki</span>
 

@@ -26,13 +26,64 @@ header h1 {
   font-weight: 700;
 }
 
+/* --- MISE EN PAGE 2 COLONNES --- */
+
 main {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #000000;
-  border: 1px solid #333;
-  box-shadow: none;
+    /* On augmente la largeur max pour avoir de la place pour les 2 colonnes */
+    max-width: 1200px; 
+    margin: 20px auto;
+    padding: 20px;
+    background-color: transparent; /* On retire le fond noir du main pour aérer */
+    border: none;
+    box-shadow: none;
+}
+
+.dashboard-container {
+    display: flex;
+    gap: 30px; /* Espace entre le compagnon et les projets */
+    align-items: flex-start; /* Aligne tout en haut */
+}
+
+/* La Colonne de Gauche (Compagnon) */
+.left-sidebar {
+    width: 300px;     /* Largeur fixe pour le compagnon */
+    flex-shrink: 0;   /* Empêche le compagnon de s'écraser */
+    position: sticky; /* (Optionnel) Le compagnon reste visible quand tu scrolles */
+    top: 80px;        /* Décalage par rapport au haut si sticky */
+}
+
+/* La Colonne de Droite (Projets) */
+.right-content {
+    flex-grow: 1;     /* Prend tout le reste de la place */
+    min-width: 0;     /* Évite des bugs d'affichage sur certains navigateurs */
+}
+
+/* Styles spécifiques pour que le compagnon soit beau dans la sidebar */
+#companion-section {
+    margin-bottom: 0;
+    height: auto;
+    background-color: #000;
+    border: 1px solid #00ff00;
+}
+
+.pet-actions {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+/* RESPONSIVE : Sur mobile, on remet tout en colonne */
+@media (max-width: 900px) {
+    .dashboard-container {
+        flex-direction: column;
+    }
+    
+    .left-sidebar {
+        width: 100%;
+        position: static;
+        margin-bottom: 20px;
+    }
 }
 
 hr {

@@ -22,6 +22,7 @@ import {
     onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
+// --- CONFIGURATION FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg",
     authDomain: "mes-deadlines.firebaseapp.com",
@@ -38,9 +39,36 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
+// --- CONFIGURATION DU COMPAGNON (MODIFIABLE) ---
+const PET_CONFIG = {
+    costFeed: 50,       // Coût en XP Utilisateur pour nourrir
+    xpGain: 20,         // XP gagné par le Pet quand on le nourrit
+    costRename: 200,    // Coût en XP Utilisateur pour renommer
+    // Évolution visuelle du compagnon (ASCII Art)
+    stages: [
+        { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
+        { minLvl: 3, art: "[ o_o ]", name: "Robo-Bot" },
+        { minLvl: 5, art: "/( 0_0 )\\", name: "Cyber-Droïde" },
+        { minLvl: 8, art: "ᕦ[ ▀_▀ ]ᕤ", name: "Mecha-Unit" },
+        { minLvl: 12, art: "<[ ☢_☢ ]>", name: "The Construct" }
+    ]
+};
+
+// --- DOM ELEMENTS ---
 const projectStatsDiv = document.getElementById("project-stats");
 const completedCountSpan = document.getElementById("completed-count");
 const totalCountSpan = document.getElementById("total-count");
+const userLevelContainer = document.getElementById('user-level-container');
+
+// DOM Elements Compagnon
+const companionSection = document.getElementById('companion-section');
+const petNameDisplay = document.getElementById('pet-name-display');
+const petLevelDisplay = document.getElementById('pet-level-display');
+const petVisual = document.getElementById('pet-visual');
+const petXpBar = document.getElementById('pet-xp-bar-inner');
+const petMessage = document.getElementById('pet-message');
+const feedBtn = document.getElementById('feed-btn');
+const renameBtn = document.getElementById('rename-btn');
 
 document.addEventListener("DOMContentLoaded", () => {
     const projectForm = document.getElementById("project-form");
@@ -57,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentUser = null;
     let unsubscribeFromProjects = null;
 
+    // --- AUTHENTIFICATION ---
     loginBtn.addEventListener("click", () => {
         signInWithPopup(auth, provider).catch((error) => console.error(error));
     });
@@ -70,6 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentUser = user;
             uiForLoggedIn(user);
             syncAllXP(user);
+            loadCompanion(user); // Charge le compagnon à la connexion
             
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             unsubscribeFromProjects = listenToProjects(user.uid);
@@ -79,17 +109,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             pendingList.innerHTML = "<p>Veuillez vous connecter pour voir vos projets.</p>";
-            document.getElementById('user-level-container').style.display = 'none';
+            userLevelContainer.style.display = 'none';
+            companionSection.style.display = 'none'; // Cache le compagnon si déco
         }
     });
 
+    // --- GESTION DES PROJETS ---
     projectForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-
-        if (!currentUser) {
-            alert("Vous devez être connecté pour ajouter un projet.");
-            return;
-        }
+        if (!currentUser) return;
 
         const name = projectNameInput.value;
         const start = startDateInput.value;
@@ -151,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (pendingCount === 0) {
-                pendingList.innerHTML = "<p>Aucun projet en cours pour le moment.</p>";
+                pendingList.innerHTML = "<p>Aucun projet en cours.</p>";
             }
 
             completedCountSpan.textContent = completedCount;
@@ -218,49 +246,154 @@ document.addEventListener("DOMContentLoaded", () => {
              </div> 
              ${projectActionsHTML}
          `;
-
         return projectCard;
     }
 
     projectsGrid.addEventListener("click", async (e) => {
         if (e.target.classList.contains("delete-btn")) {
             const idToDelete = e.target.getAttribute("data-id");
-
-            if (!confirm("Êtes-vous sûr de vouloir supprimer ce projet ?")) {
-                return;
-            }
-
+            if (!confirm("Supprimer ce projet ?")) return;
             try {
-                const docRef = doc(db, "projects", idToDelete);
-                await deleteDoc(docRef);
-            } catch (error) {
-                console.error(error);
-            }
+                await deleteDoc(doc(db, "projects", idToDelete));
+            } catch (error) { console.error(error); }
         }
 
         if (e.target.classList.contains('complete-btn')) {
             const idToComplete = e.target.getAttribute('data-id');
             const xpReward = 100; 
-
             try {
-                const docRef = doc(db, 'projects', idToComplete);
-                await updateDoc(docRef, {
-                    status: 'completed'
-                });
-                
-                if (currentUser) {
-                    updateUserXP(currentUser, xpReward);
-                }
-            } catch (error) {
-                console.error(error);
-            }
+                await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
+                if (currentUser) updateUserXP(currentUser, xpReward);
+            } catch (error) { console.error(error); }
         }
     });
+
+    // --- GESTION COMPAGNON (PET) ---
+
+    async function loadCompanion(user) {
+        companionSection.style.display = 'block';
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        let data = snap.data();
+        
+        // Création du compagnon par défaut s'il n'existe pas
+        if (!data || !data.companion) {
+            const initialCompanion = {
+                name: "Glitch",
+                level: 1,
+                currentXp: 0,
+                maxXp: 100
+            };
+            await setDoc(userRef, { companion: initialCompanion }, { merge: true });
+            // On recharge les données locales pour l'affichage
+            data = (await getDoc(userRef)).data(); 
+        }
+        renderCompanion(data.companion);
+    }
+
+    function renderCompanion(pet) {
+        if (!pet) return;
+        petNameDisplay.textContent = pet.name;
+        petLevelDisplay.textContent = `NIV ${pet.level}`;
+        
+        const percent = Math.min((pet.currentXp / pet.maxXp) * 100, 100);
+        petXpBar.style.width = `${percent}%`;
+
+        // Trouve le bon ASCII Art selon le niveau
+        let currentStage = PET_CONFIG.stages[0];
+        for (let stage of PET_CONFIG.stages) {
+            if (pet.level >= stage.minLvl) {
+                currentStage = stage;
+            }
+        }
+        petVisual.textContent = currentStage.art;
+    }
+
+    // Bouton Nourrir
+    if (feedBtn) {
+        feedBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+            
+            const userRef = doc(db, "users", currentUser.uid);
+            const snap = await getDoc(userRef);
+            const data = snap.data();
+            
+            const userXp = data.xp || 0;
+            
+            if (userXp < PET_CONFIG.costFeed) {
+                petMessage.textContent = "⚠️ XP Insuffisante !";
+                petMessage.style.color = "red";
+                setTimeout(() => petMessage.textContent = "En attente...", 2000);
+                return;
+            }
+
+            let pet = data.companion;
+            let newUserXp = userXp - PET_CONFIG.costFeed;
+            
+            pet.currentXp += PET_CONFIG.xpGain;
+            
+            // Logique de Level Up
+            if (pet.currentXp >= pet.maxXp) {
+                pet.level++;
+                pet.currentXp = pet.currentXp - pet.maxXp; // Reporte le surplus
+                pet.maxXp = Math.floor(pet.maxXp * 1.3); // Augmente la difficulté
+                petMessage.textContent = "⚡ UPGRADE RÉUSSI !";
+                petMessage.style.color = "#00ff00";
+            } else {
+                petMessage.textContent = `Miam ! (+${PET_CONFIG.xpGain} XP)`;
+                petMessage.style.color = "#aaa";
+            }
+
+            // Sauvegarde
+            await updateDoc(userRef, {
+                xp: newUserXp,
+                companion: pet
+            });
+
+            // Mise à jour UI
+            updateLevelUI(newUserXp, Math.floor(newUserXp / 500) + 1);
+            renderCompanion(pet);
+            setTimeout(() => petMessage.textContent = "En attente...", 2000);
+        });
+    }
+
+    // Bouton Renommer
+    if (renameBtn) {
+        renameBtn.addEventListener('click', async () => {
+            if (!currentUser) return;
+
+            const newName = prompt(`Nouveau nom du système (Coût: ${PET_CONFIG.costRename} XP) :`);
+            if (!newName || newName.trim() === "") return;
+
+            const userRef = doc(db, "users", currentUser.uid);
+            const snap = await getDoc(userRef);
+            const data = snap.data();
+            
+            if ((data.xp || 0) < PET_CONFIG.costRename) {
+                alert("XP système insuffisante pour le renommage.");
+                return;
+            }
+
+            let pet = data.companion;
+            pet.name = newName.trim();
+            let newUserXp = data.xp - PET_CONFIG.costRename;
+
+            await updateDoc(userRef, {
+                xp: newUserXp,
+                companion: pet
+            });
+
+            updateLevelUI(newUserXp, Math.floor(newUserXp / 500) + 1);
+            renderCompanion(pet);
+        });
+    }
+
+    // --- GESTION XP & UI ---
 
     function uiForLoggedIn(user) {
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
-        userDetails.textContent = `Connecté: ${user.email}`;
+        userDetails.textContent = `Opérateur: ${user.email.split('@')[0]}`;
         projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
         projectStatsDiv.style.display = "flex";
@@ -278,53 +411,27 @@ document.addEventListener("DOMContentLoaded", () => {
     async function updateUserXP(user, xpGained = 0) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
-        
-        let currentXP = 0;
-
-        if (userSnap.exists()) {
-            currentXP = userSnap.data().xp || 0;
-        }
+        let currentXP = userSnap.exists() ? (userSnap.data().xp || 0) : 0;
         
         let newXP = currentXP + xpGained;
         let newLevel = Math.floor(newXP / 500) + 1;
 
-        await setDoc(userRef, {
-            xp: newXP,
-            level: newLevel,
-            email: user.email
-        }, { merge: true });
-
+        await setDoc(userRef, { xp: newXP, level: newLevel, email: user.email }, { merge: true });
         updateLevelUI(newXP, newLevel);
-        
-        if (xpGained > 0) {
-            alert(`🎮 QUÊTE ACCOMPLIE !\n+${xpGained} XP`); 
-        }
+        if (xpGained > 0) alert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP`);
     }
 
     async function syncAllXP(user) {
-        const q = query(
-            projectsCollection, 
-            where("userId", "==", user.uid),
-            where("status", "==", "completed")
-        );
-
-        try {
-            const snapshot = await getDocs(q);
-            const count = snapshot.size;
-            
-            const totalXP = count * 100;
-            const level = Math.floor(totalXP / 500) + 1;
-
-            const userRef = doc(db, "users", user.uid);
-            await setDoc(userRef, {
-                xp: totalXP,
-                level: level,
-                email: user.email
-            }, { merge: true });
-
-            updateLevelUI(totalXP, level);
-        } catch (error) {
-            console.error("Index manquant ou erreur synchro XP:", error);
+        // Cette fonction recalcule l'XP totale basée sur les projets finis
+        // (Utile si l'XP a été dépensée, pour garder le compte du niveau "historique" si besoin,
+        // mais ici on gère l'XP comme une monnaie courante)
+        
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+            const data = userSnap.data();
+            updateLevelUI(data.xp || 0, data.level || 1);
         }
     }
 
@@ -332,9 +439,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const levelBadge = document.getElementById('level-badge');
         const xpBarFill = document.getElementById('xp-bar-fill');
         const xpText = document.getElementById('xp-text');
-        const levelContainer = document.getElementById('user-level-container');
-
-        levelContainer.style.display = 'flex';
+        
+        userLevelContainer.style.display = 'flex';
         levelBadge.textContent = `LVL ${level}`;
         xpText.textContent = `${xp} XP`;
         
