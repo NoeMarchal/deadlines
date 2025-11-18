@@ -10,19 +10,27 @@
     </head>
 
     <body>
-        <div id="auth-container">
-            <div id="project-stats" style="display: none">
-                <span id="completed-count">0</span> /
-                <span id="total-count">0</span> PROJETS
-            </div>
-
-            <div id="auth-right">
-                <span id="user-details"></span>
-                <button id="login-btn">Se connecter</button>
-                <button id="logout-btn" style="display: none">Se
-                    déconnecter</button>
-            </div>
+<div id="auth-container">
+    <div id="auth-left">
+        <div id="project-stats" style="display: none;">
+            <span id="completed-count">0</span> / <span id="total-count">0</span> PROJETS
         </div>
+    </div>
+
+    <div id="user-level-container" style="display: none;">
+        <span id="level-badge">LVL 1</span>
+        <div id="xp-bar-bg">
+            <div id="xp-bar-fill"></div>
+        </div>
+        <span id="xp-text">0 XP</span>
+    </div>
+
+    <div id="auth-right">
+        <span id="user-details"></span>
+        <button id="login-btn">Se connecter</button>
+        <button id="logout-btn" style="display: none;">Se déconnecter</button>
+    </div>
+</div>
 
         <header>
             <h1>Archives</h1>

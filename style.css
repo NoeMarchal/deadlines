@@ -498,26 +498,48 @@ main,
   border-radius: 0 !important;
 }
 
+/* --- BARRE DE NAVIGATION (HUD) --- */
 #auth-container {
   position: sticky;
   top: 0;
   background-color: #000;
   z-index: 1000;
   border-bottom: 1px solid #111;
+  
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Pousse gauche et droite aux extrémités */
   align-items: center;
-  gap: 15px;
-  text-align: right;
+  
   padding: 10px 20px;
   width: 100%;
+  height: 60px; /* Hauteur fixe pour l'alignement vertical */
   box-sizing: border-box;
 }
 
+/* ZONE GAUCHE */
+#auth-left {
+  display: flex;
+  align-items: center;
+  min-width: 150px; /* Réserve un peu d'espace */
+}
+
+#project-stats {
+  display: flex; /* Flex pour que le display:none du JS fonctionne bien */
+  align-items: center;
+  gap: 5px;
+  color: #00ff00;
+  font-weight: 700;
+  font-size: 1.1em;
+  border: 1px solid #00ff00;
+  padding: 4px 8px;
+}
+
+/* ZONE MILIEU (Absolument centré) */
 #user-level-container {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%); /* Technique pour centrer parfaitement */
+  
   display: flex;
   align-items: center;
   gap: 10px;
@@ -525,6 +547,16 @@ main,
   white-space: nowrap;
 }
 
+/* ZONE DROITE */
+#auth-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  justify-content: flex-end;
+  min-width: 150px; /* Équilibre avec la gauche */
+}
+
+/* Styles des éléments internes */
 #level-badge {
   color: #FFD700;
   font-weight: 700;
@@ -553,46 +585,40 @@ main,
   color: #AAA;
 }
 
-@media (max-width: 650px) {
+#user-details {
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+/* RESPONSIVE : Adaptation mobile */
+@media (max-width: 700px) {
   #auth-container {
-    flex-wrap: wrap;
     height: auto;
-    padding: 10px;
-    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 10px;
+    padding: 15px;
   }
 
+  /* Sur mobile, on annule le positionnement absolu pour tout empiler proprement */
   #user-level-container {
     position: static;
     transform: none;
-    left: auto;
-    margin: 0;
+    order: 3; /* Le niveau passe en dessous */
+    width: 100%;
+    justify-content: center;
+    margin-top: 5px;
+  }
+  
+  #auth-left {
+    order: 1;
+  }
+  
+  #auth-right {
     order: 2;
   }
-
-  #xp-bar-bg,
-  #xp-text {
-    display: none;
-  }
-
-  #level-badge {
-    font-size: 0.8em;
-    padding: 2px 4px;
-  }
-
-  #auth-right {
-    order: 3;
-    gap: 5px;
-  }
-
-  #auth-right button {
-    font-size: 0.7em;
-    padding: 5px 8px;
-  }
-
-  #project-stats {
-    order: 1;
-    font-size: 0.8em;
-    margin-left: 0;
+  
+  #xp-bar-bg, #xp-text {
+    /* Optionnel : Masquer la barre XP sur très petit écran si ça gêne */
+    /* display: none; */ 
   }
 }
