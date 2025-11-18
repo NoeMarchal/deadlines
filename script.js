@@ -41,9 +41,9 @@ const projectsCollection = collection(db, "projects");
 
 // --- CONFIGURATION DU COMPAGNON (MODIFIABLE) ---
 const PET_CONFIG = {
-    costFeed: 50,       // Coût en XP Utilisateur pour nourrir
-    xpGain: 20,         // XP gagné par le Pet quand on le nourrit
-    costRename: 200,    // Coût en XP Utilisateur pour renommer
+    costFeed: 10,       // Coût en XP Utilisateur pour nourrir
+    xpGain: 50,         // XP gagné par le Pet quand on le nourrit
+    costRename: 50,    // Coût en XP Utilisateur pour renommer
     // Évolution visuelle du compagnon (ASCII Art)
     stages: [
         { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
@@ -260,7 +260,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (e.target.classList.contains('complete-btn')) {
             const idToComplete = e.target.getAttribute('data-id');
-            const xpReward = 100; 
+            const xpReward = 500; 
             try {
                 await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
                 if (currentUser) updateUserXP(currentUser, xpReward);
@@ -388,11 +388,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- GESTION XP & UI ---
-
-    function uiForLoggedIn(user) {
+function uiForLoggedIn(user) {
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
+        // On garde juste la première partie de l'email pour faire propre
         userDetails.textContent = `Opérateur: ${user.email.split('@')[0]}`;
         projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
@@ -414,7 +413,9 @@ document.addEventListener("DOMContentLoaded", () => {
         let currentXP = userSnap.exists() ? (userSnap.data().xp || 0) : 0;
         
         let newXP = currentXP + xpGained;
-        let newLevel = Math.floor(newXP / 500) + 1;
+        
+        // --- CHANGEMENT ICI : Division par 1300 ---
+        let newLevel = Math.floor(newXP / 1300) + 1; 
 
         await setDoc(userRef, { xp: newXP, level: newLevel, email: user.email }, { merge: true });
         updateLevelUI(newXP, newLevel);
@@ -422,15 +423,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function syncAllXP(user) {
-        // Cette fonction recalcule l'XP totale basée sur les projets finis
-        // (Utile si l'XP a été dépensée, pour garder le compte du niveau "historique" si besoin,
-        // mais ici on gère l'XP comme une monnaie courante)
-        
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         
         if (userSnap.exists()) {
             const data = userSnap.data();
+            // On s'assure que l'affichage est synchro avec la base de données
             updateLevelUI(data.xp || 0, data.level || 1);
         }
     }
@@ -442,9 +440,13 @@ document.addEventListener("DOMContentLoaded", () => {
         
         userLevelContainer.style.display = 'flex';
         levelBadge.textContent = `LVL ${level}`;
-        xpText.textContent = `${xp} XP`;
         
-        const progress = (xp % 500) / 500 * 100;
+        // Affichage type "450 / 1300 XP" pour savoir combien il reste
+        const currentLevelXp = xp % 1300;
+        xpText.textContent = `${currentLevelXp} / 1300 XP`;
+        
+        // --- CHANGEMENT ICI : Calcul du pourcentage sur 1300 ---
+        const progress = (currentLevelXp) / 1300 * 100;
         xpBarFill.style.width = `${progress}%`;
     }
 });

@@ -28,7 +28,7 @@ header h1 {
 
 /* --- MISE EN PAGE 2 COLONNES --- */
 main {
-    max-width: 1100px; /* Un peu plus large pour respirer */
+    max-width: 95%; /* Un peu plus large pour respirer */
     margin: 40px auto; /* Marge en haut pour descendre un peu le tout */
     padding: 0 20px;
     background-color: transparent;
