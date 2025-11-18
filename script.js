@@ -10,6 +10,8 @@ import {
     query,
     orderBy,
     where,
+    getDoc, 
+    setDoc
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 import {
     getAuth,
@@ -75,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (user) {
             currentUser = user;
             uiForLoggedIn(user);
-
+            updateUserXP(user, 0);
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             unsubscribeFromProjects = listenToProjects(user.uid);
         } else {
@@ -260,13 +262,30 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        if (e.target.classList.contains("complete-btn")) {
-            const idToComplete = e.target.getAttribute("data-id");
+// Clic sur TERMINER
+        if (e.target.classList.contains('complete-btn')) {
+            const idToComplete = e.target.getAttribute('data-id');
+            
+            // --- CALCUL DE L'XP ---
+            // On doit retrouver les infos du projet pour calculer la durée
+            // Astuce : Firebase updateDoc ne renvoie pas les données, 
+            // donc on va faire une estimation ou récupérer le doc avant.
+            // Pour faire simple ici, on donne un forfait fixe + bonus
+            
+            const xpReward = 100; // 100 XP par projet terminé (Tu pourras complexifier après)
+
             try {
-                const docRef = doc(db, "projects", idToComplete);
+                const docRef = doc(db, 'projects', idToComplete);
                 await updateDoc(docRef, {
-                    status: "completed",
+                    status: 'completed'
                 });
+                
+                // --- NOUVEAU : Donner la récompense ---
+                if (currentUser) {
+                    updateUserXP(currentUser, xpReward);
+                }
+                // --------------------------------------
+
             } catch (error) {
                 console.error("Erreur lors de la mise à jour du statut: ", error);
             }
@@ -295,4 +314,57 @@ document.addEventListener("DOMContentLoaded", () => {
         projectStatsDiv.style.display = "none";
     }
 });
+
+// --- GESTION GAMIFICATION ---
+    async function updateUserXP(user, xpGained = 0) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        let currentXP = 0;
+        let currentLevel = 1;
+
+        if (userSnap.exists()) {
+            currentXP = userSnap.data().xp || 0;
+        }
+        
+        // Ajouter l'XP gagnée
+        let newXP = currentXP + xpGained;
+        
+        // Calcul du niveau (Formule simple : Niveau augmente tous les 500 XP)
+        // Tu pourras ajuster la difficulté ici
+        let newLevel = Math.floor(newXP / 500) + 1;
+
+        // Sauvegarder dans Firebase
+        await setDoc(userRef, {
+            xp: newXP,
+            level: newLevel,
+            email: user.email
+        }, { merge: true }); // merge: true évite d'écraser d'autres infos
+
+        // Mettre à jour l'interface
+        updateLevelUI(newXP, newLevel);
+        
+        // Petit effet visuel si on gagne de l'XP
+        if (xpGained > 0) {
+            console.log(`🎮 BRAVO ! +${xpGained} XP`);
+            alert(`🎮 QUÊTE ACCOMPLIE !\n+${xpGained} XP`); // Tu pourras remplacer ça par un son plus tard
+        }
+    }
+
+    function updateLevelUI(xp, level) {
+        const levelBadge = document.getElementById('level-badge');
+        const xpBarFill = document.getElementById('xp-bar-fill');
+        const xpText = document.getElementById('xp-text');
+        const levelContainer = document.getElementById('user-level-container');
+
+        // Afficher le conteneur
+        levelContainer.style.display = 'flex';
+
+        levelBadge.textContent = `LVL ${level}`;
+        xpText.textContent = `${xp} XP`;
+        
+        // Calcul de la barre (Modulo 500 pour voir la progression vers le prochain niveau)
+        const progress = (xp % 500) / 500 * 100;
+        xpBarFill.style.width = `${progress}%`;
+    }
 
