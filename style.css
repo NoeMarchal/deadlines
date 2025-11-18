@@ -557,7 +557,7 @@ main {
 #user-level-container {
     /* Positionnement absolu pour centrer parfaitement */
     position: absolute;
-    left: 50%;
+    left: 90%;
     transform: translateX(-50%);
     
     display: flex;
