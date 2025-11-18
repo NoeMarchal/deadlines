@@ -1,388 +1,400 @@
-@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap");
 
 body {
-    font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
-    background-color: #000000;
-    color: #FFFFFF;
-    margin: 0;
-    padding: 20px;
-    font-smooth: never;
-    -webkit-font-smoothing: none;
+  font-family: "Pixelify Sans", "Courier New", Courier, monospace;
+  background-color: #000000;
+  color: #ffffff;
+  margin: 0;
+  padding: 20px;
+  font-smooth: never;
+  -webkit-font-smoothing: none;
 }
 
-h1, h2, h3, button, label {
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+h1,
+h2,
+h3,
+button,
+label {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
 header h1 {
-    text-align: center;
-    color: #FFFFFF;
-    font-size: 2.5em;
-    font-weight: 700;
+  text-align: center;
+  color: #ffffff;
+  font-size: 2.5em;
+  font-weight: 700;
 }
 
 main {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #000000;
-    border: 1px solid #333;
-    border-radius: 20;
-    box-shadow: none;
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #000000;
+  border: 1px solid #333;
+  border-radius: 20;
+  box-shadow: none;
 }
 
 hr {
-    border: none;
-    border-top: 1px solid #333;
+  border: none;
+  border-top: 1px solid #333;
 }
 
 #form-container h2 {
-    color: #FFF;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
+  color: #fff;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
 }
 
 #project-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: center;
 }
 
 #project-form label {
-    color: #AAA;
-    font-size: 0.9em;
-    padding-left: 2px;
-    align-self: end;
+  color: #aaa;
+  font-size: 0.9em;
+  padding-left: 2px;
+  align-self: end;
 }
 
 #project-form input {
-    font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
-    background-color: #111;
-    color: #FFF;
-    border: 1px solid #555;
-    padding: 10px;
-    border-radius: 20;
-    font-size: 1.1em;
+  font-family: "Pixelify Sans", "Courier New", Courier, monospace;
+  background-color: #111;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 10px;
+  border-radius: 20;
+  font-size: 1.1em;
 }
 
 #project-form input[type="text"] {
-    grid-column: 1 / -1;
+  grid-column: 1 / -1;
 }
 
 #project-form button {
-    grid-column: 1 / -1;
-    font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
-    padding: 12px 15px;
-    background-color: transparent;
-    color: #FF0000;
-    border: 2px solid #FF0000;
-    border-radius: 20;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 700;
-    transition: all 0.2s ease-in-out;
+  grid-column: 1 / -1;
+  font-family: "Pixelify Sans", "Courier New", Courier, monospace;
+  padding: 12px 15px;
+  background-color: transparent;
+  color: #ff0000;
+  border: 2px solid #ff0000;
+  border-radius: 20;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  transition: all 0.2s ease-in-out;
 }
 
 #project-form button:hover {
-    background-color: #FF0000;
-    color: #000000;
+  background-color: #ff0000;
+  color: #000000;
 }
 
 .project-card {
-    background-color: #000;
-    border: 1px solid #333;
-    border-radius: 20;
-    padding: 20px;
-    margin-bottom: 15px;
+  background-color: #000;
+  border: 1px solid #333;
+  border-radius: 20;
+  padding: 20px;
+  margin-bottom: 15px;
 }
 
 .project-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
 .project-header h3 {
-    margin: 0;
-    color: #FFFFFF;
-    font-size: 1.5em;
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.5em;
 }
 
 .project-dates {
-    font-size: 1em;
-    color: #AAA;
+  font-size: 1em;
+  color: #aaa;
 }
 
 .progress-bar-container {
-    width: 100%;
-    background-color: #333;
-    border-radius: 20;
-    height: 25px;
-    overflow: hidden;
-    border: none;
+  width: 100%;
+  background-color: #333;
+  border-radius: 20;
+  height: 25px;
+  overflow: hidden;
+  border: none;
 }
 
 .progress-bar-inner {
-    height: 100%;
-    width: 0%;
-    background-color: #FF0000;
-    border-radius: 20;
-    transition: width 0.5s ease-in-out;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #000000;
-    font-weight: 700;
-    font-size: 16px;
+  height: 100%;
+  width: 0%;
+  background-color: #ff0000;
+  border-radius: 20;
+  transition: width 0.5s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .delete-btn {
-    font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
-    background-color: transparent;
-    color: #AAA;
-    border: 1px solid #555;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 20;
-    font-size: 0.9em;
-    transition: all 0.2s;
-    text-transform: uppercase;
+  font-family: "Pixelify Sans", "Courier New", Courier, monospace;
+  background-color: transparent;
+  color: #aaa;
+  border: 1px solid #555;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 20;
+  font-size: 0.9em;
+  transition: all 0.2s;
+  text-transform: uppercase;
 }
 
 .delete-btn:hover {
-    color: #FF0000;
-    border-color: #FF0000;
+  color: #ff0000;
+  border-color: #ff0000;
 }
 
 @media (max-width: 600px) {
-    body {
-        padding: 10px;
-    }
-    
-    main {
-        padding: 15px;
-    }
-    #project-form {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    #project-form input[type="date"] {
-        width: 100%;
-        box-sizing: border-box;
-    }
-    
-    #project-form label {
-        padding-bottom: 2px;
-    }
-    .project-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    .project-dates {
-        font-size: 0.9em;
-    }
+  body {
+    padding: 10px;
+  }
 
-    header h1 {
-        font-size: 2em;
-    }
-    
-    .project-header h3 {
-        font-size: 1.3em;
-    }
-    
-    .progress-bar-inner {
-        font-size: 14px;
-    }
+  main {
+    padding: 15px;
+  }
+
+  #project-form {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  #project-form input[type="date"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  #project-form label {
+    padding-bottom: 2px;
+  }
+
+  .project-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .project-dates {
+    font-size: 0.9em;
+  }
+
+  header h1 {
+    font-size: 2em;
+  }
+
+  .project-header h3 {
+    font-size: 1.3em;
+  }
+
+  .progress-bar-inner {
+    font-size: 14px;
+  }
 }
 
 .project-card.is-urgent {
-    border-color: #FF0000;
-    border-width: 2px;
+  border-color: #ff0000;
+  border-width: 2px;
 }
 
 .project-card.is-urgent .project-header h3 {
-    color: #FF0000;
+  color: #ff0000;
 }
 
 #auth-container {
-    text-align: right;
-    padding: 10px 20px;
-    width: 100%;
-    box-sizing: border-box;
-    position: sticky;
-    top: 0;
-    background-color: #000;
-    z-index: 1000;
-    border-bottom: 1px solid #111;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
+  text-align: right;
+  padding: 10px 20px;
+  width: 100%;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  background-color: #000;
+  z-index: 1000;
+  border-bottom: 1px solid #111;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
 }
 
 #auth-container button {
-    font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
-    text-transform: uppercase;
-    font-size: 0.9em;
-    padding: 6px 15px;
-    border-radius: 20;
-    cursor: pointer;
-    background: transparent;
-    transition: all 0.2s;
-    line-height: 1;
+  font-family: "Pixelify Sans", "Courier New", Courier, monospace;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  padding: 6px 15px;
+  border-radius: 20;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.2s;
+  line-height: 1;
 }
 
-#login-btn, #logout-btn {
-    color: #AAA;
-    border: 1px solid #555;
+#login-btn,
+#logout-btn {
+  color: #aaa;
+  border: 1px solid #555;
 }
 
-#login-btn:hover, #logout-btn:hover {
-    background: #555;
-    color: #000;
+#login-btn:hover,
+#logout-btn:hover {
+  background: #555;
+  color: #000;
 }
 
 #user-details {
-    color: #AAA;
-    font-size: 1em;
-    margin-right: 0;
+  color: #aaa;
+  font-size: 1em;
+  margin-right: 0;
 }
 
 #logout-btn {
-    border-color: #FF0000;
-    color: #FF0000;
+  border-color: #ff0000;
+  color: #ff0000;
 }
+
 #logout-btn:hover {
-    background: #FF0000;
-    color: #000;
+  background: #ff0000;
+  color: #000;
 }
 
 @media (max-width: 600px) {
-    #auth-container {
-        padding: 8px 10px;
-        gap: 10px;
-    }
-    #auth-container button {
-        font-size: 0.8em;
-        padding: 4px 10px;
-    }
-    #user-details {
-        font-size: 0.9em;
-        max-width: 120px; 
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
+  #auth-container {
+    padding: 8px 10px;
+    gap: 10px;
+  }
+
+  #auth-container button {
+    font-size: 0.8em;
+    padding: 4px 10px;
+  }
+
+  #user-details {
+    font-size: 0.9em;
+    max-width: 120px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }
 
- .progress-bar-inner.is-completed { 
-     background-color: #00FF00;
-     color: #000000; 
- } 
+.progress-bar-inner.is-completed {
+  background-color: #00ff00;
+  color: #000000;
+}
 
+.project-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
 
- .project-actions { 
-     margin-top: 15px; 
-     display: flex; 
-     gap: 10px; 
-     align-items: center; 
- } 
+.complete-btn {
+  font-family: "Pixelify Sans", "Courier New", Courier, monospace;
+  background-color: transparent;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 20;
+  font-size: 0.9em;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
 
- .complete-btn { 
-     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace; 
-     background-color: transparent; 
-     color: #00FF00;
-     border: 1px solid #00FF00; 
-     padding: 5px 10px; 
-     cursor: pointer; 
-     border-radius: 20; 
-     font-size: 0.9em; 
-     transition: all 0.2s; 
-     text-transform: uppercase; 
- } 
+.complete-btn:hover {
+  background-color: #00ff00;
+  color: #000000;
+}
 
- .complete-btn:hover { 
-     background-color: #00FF00; 
-     color: #000000; 
- } 
+.project-completed-text {
+  font-size: 1em;
+  font-weight: 700;
+  color: #00ff00;
+  margin-right: 10px;
+}
 
- .project-completed-text { 
-     font-size: 1em; 
-     font-weight: 700; 
-     color: #00FF00;
-     margin-right: 10px; 
- } 
+.project-card.is-completed {
+  border-color: #333;
+}
 
- .project-card.is-completed { 
-     border-color: #333;
- } 
+.project-card.is-completed .project-header h3,
+.project-card.is-completed .project-dates {
+  color: #777;
+}
 
- .project-card.is-completed .project-header h3, 
- .project-card.is-completed .project-dates { 
-     color: #777;
- }
+.project-card.is-completed.is-urgent .project-header h3 {
+  color: #777;
+}
 
- .project-card.is-completed.is-urgent .project-header h3 { 
-     color: #777; 
- }
+#projects-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  border: none;
+  padding: 0;
+}
 
- #projects-container {
-     display: grid;
-     grid-template-columns: 1fr 1fr;
-     gap: 20px;
-     border: none;
-     padding: 0;
- }
+.project-column h2 {
+  color: #fff;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
 
- .project-column h2 {
-    color: #FFF;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
-    margin-top: 0;
- }
+#pending-projects-list p,
+#completed-projects-list p {
+  color: #777;
+  font-size: 1.1em;
+}
 
- #pending-projects-list p,
- #completed-projects-list p {
-     color: #777;
-     font-size: 1.1em;
- }
+@media (max-width: 800px) {
+  #projects-container {
+    grid-template-columns: 1fr;
+  }
 
- @media (max-width: 800px) {
-     #projects-container {
-         grid-template-columns: 1fr; 
-     }
-     #completed-column {
-         margin-top: 40px;
-     }
- }
+  #completed-column {
+    margin-top: 40px;
+  }
+}
 
 #project-stats {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: #00FF00;
-    font-weight: 700;
-    font-size: 1.1em;
-    border: 1px solid #00FF00;
-    padding: 4px 8px;
-    border-radius: 20;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #00ff00;
+  font-weight: 700;
+  font-size: 1.1em;
+  border: 1px solid #00ff00;
+  padding: 4px 8px;
+  border-radius: 20;
 }
 
 @media (max-width: 600px) {
-    #project-stats {
-        font-size: 0.9em;
-        padding: 3px 6px;
-        margin-left: 10px;
-    }
+  #project-stats {
+    font-size: 0.9em;
+    padding: 3px 6px;
+    margin-left: 10px;
+  }
 }
+
 #auth-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }

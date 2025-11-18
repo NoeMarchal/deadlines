@@ -1,61 +1,59 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes Deadlines</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="apple-touch-icon" href="Images/apple-icon.png">
-</head>
-<body>
-<div id="auth-container">
 
-    <div id="project-stats" style="display: none;">
-        <span id="completed-count">0</span> / <span id="total-count">0</span> PROJETS
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mes Deadlines</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="apple-touch-icon" href="Images/apple-icon.png" />
+</head>
+
+<body>
+  <div id="auth-container">
+    <div id="project-stats" style="display: none">
+      <span id="completed-count">0</span> /
+      <span id="total-count">0</span> PROJETS
     </div>
 
     <div id="auth-right">
-        <span id="user-details"></span>
-        <button id="login-btn">Se connecter</button>
-        <button id="logout-btn" style="display: none;">Se déconnecter</button>
+      <span id="user-details"></span>
+      <button id="login-btn">Se connecter</button>
+      <button id="logout-btn" style="display: none">Se déconnecter</button>
     </div>
+  </div>
+  <header>
+    <h1>My Deadlines</h1>
+  </header>
 
-</div>
-    <header>
-        <h1>My Deadlines</h1>
-    </header>
+  <main>
+    <section id="form-container">
+      <h2>Ajouter un projet</h2>
+      <form id="project-form">
+        <input type="text" id="project-name" placeholder="Nom du projet" required />
+        <label for="start-date">Début :</label>
+        <input type="date" id="start-date" required />
+        <label for="end-date">Fin :</label>
+        <input type="date" id="end-date" required />
+        <button type="submit" id="add-project-btn" disabled>Ajouter</button>
+      </form>
+    </section>
 
-    <main>
-        <section id="form-container">
-            <h2>Ajouter un projet</h2>
-            <form id="project-form">
-                <input type="text" id="project-name" placeholder="Nom du projet" required>
-                <label for="start-date">Début :</label>
-                <input type="date" id="start-date" required>
-                <label for="end-date">Fin :</label>
-                <input type="date" id="end-date" required>
-                <button type="submit" id="add-project-btn" disabled>Ajouter</button>
-            </form>
-        </section>
+    <hr />
 
-        <hr>
+    <section id="projects-container">
+      <div class="project-column" id="pending-column">
+        <h2>Mes projets en cours</h2>
+        <div id="pending-projects-list"></div>
+      </div>
 
-<section id="projects-container"> 
-
-             <div class="project-column" id="pending-column">
-                 <h2>Mes projets en cours</h2>
-                 <div id="pending-projects-list">
-                     </div>
-             </div>
-
-             <div class="project-column" id="completed-column">
-                 <h2>Projets terminés</h2>
-                 <div id="completed-projects-list">
-                     </div>
-             </div>
-
-         </section>
-    </main>
-    <script src="script.js" type="module"></script>
+      <div class="project-column" id="completed-column">
+        <h2>Projets terminés</h2>
+        <div id="completed-projects-list"></div>
+      </div>
+    </section>
+  </main>
+  <script src="script.js" type="module"></script>
 </body>
+
 </html>
