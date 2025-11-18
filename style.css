@@ -537,7 +537,7 @@ main,
 /* ZONE MILIEU (Absolument centré) */
 #user-level-container {
   position: absolute;
-  left: 50%;
+  left: 40%;
   transform: translateX(-50%); /* Technique pour centrer parfaitement */
   
   display: flex;
