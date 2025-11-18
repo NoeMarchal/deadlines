@@ -49,7 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const projectForm = document.getElementById("project-form");
 
     const pendingList = document.getElementById("pending-projects-list");
-    const completedList = document.getElementById("completed-projects-list");
     const projectsGrid = document.getElementById("projects-container");
 
     const projectNameInput = document.getElementById("project-name");
@@ -87,7 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             pendingList.innerHTML =
                 "<p>Veuillez vous connecter pour voir vos projets.</p>";
-            completedList.innerHTML = "";
         }
     });
 
@@ -131,7 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         return onSnapshot(q, (snapshot) => {
             pendingList.innerHTML = "";
-            completedList.innerHTML = "";
 
             let pendingCount = 0;
             let completedCount = 0;
@@ -140,7 +137,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (snapshot.empty) {
                 pendingList.innerHTML = "<p>Aucun projet pour le moment.</p>";
-                completedList.innerHTML = "<p>Aucun projet terminé.</p>";
 
                 completedCountSpan.textContent = 0;
                 totalCountSpan.textContent = 0;
@@ -152,8 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const projectCard = renderProject(doc);
 
                 if (projectCard) {
-                    if (status === "completed") {
-                        completedList.appendChild(projectCard);
+                    if (status === 'completed') {
                         completedCount++;
                     } else {
                         pendingList.appendChild(projectCard);
@@ -171,9 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (pendingCount === 0) {
                 pendingList.innerHTML = "<p>Aucun projet en cours pour le moment.</p>";
-            }
-            if (completedCount === 0) {
-                completedList.innerHTML = "<p>Aucun projet terminé.</p>";
             }
 
             completedCountSpan.textContent = completedCount;
@@ -303,3 +295,4 @@ document.addEventListener("DOMContentLoaded", () => {
         projectStatsDiv.style.display = "none";
     }
 });
+
