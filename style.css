@@ -32,7 +32,6 @@ main {
   padding: 20px;
   background-color: #000000;
   border: 1px solid #333;
-  border-radius: 20;
   box-shadow: none;
 }
 
@@ -67,7 +66,6 @@ hr {
   color: #fff;
   border: 1px solid #555;
   padding: 10px;
-  border-radius: 20;
   font-size: 1.1em;
 }
 
@@ -82,7 +80,6 @@ hr {
   background-color: transparent;
   color: #ff0000;
   border: 2px solid #ff0000;
-  border-radius: 20;
   cursor: pointer;
   font-size: 18px;
   font-weight: 700;
@@ -97,7 +94,6 @@ hr {
 .project-card {
   background-color: #000;
   border: 1px solid #333;
-  border-radius: 20;
   padding: 20px;
   margin-bottom: 15px;
 }
@@ -123,7 +119,6 @@ hr {
 .progress-bar-container {
   width: 100%;
   background-color: #333;
-  border-radius: 20;
   height: 25px;
   overflow: hidden;
   border: none;
@@ -133,7 +128,6 @@ hr {
   height: 100%;
   width: 0%;
   background-color: #ff0000;
-  border-radius: 20;
   transition: width 0.5s ease-in-out;
   display: flex;
   align-items: center;
@@ -150,7 +144,6 @@ hr {
   border: 1px solid #555;
   padding: 5px 10px;
   cursor: pointer;
-  border-radius: 20;
   font-size: 0.9em;
   transition: all 0.2s;
   text-transform: uppercase;
@@ -217,10 +210,6 @@ hr {
 }
 
 #auth-container {
-  text-align: right;
-  padding: 10px 20px;
-  width: 100%;
-  box-sizing: border-box;
   position: sticky;
   top: 0;
   background-color: #000;
@@ -230,6 +219,10 @@ hr {
   justify-content: space-between;
   align-items: center;
   gap: 15px;
+  text-align: right;
+  padding: 10px 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #auth-container button {
@@ -237,7 +230,6 @@ hr {
   text-transform: uppercase;
   font-size: 0.9em;
   padding: 6px 15px;
-  border-radius: 20;
   cursor: pointer;
   background: transparent;
   transition: all 0.2s;
@@ -272,26 +264,6 @@ hr {
   color: #000;
 }
 
-@media (max-width: 600px) {
-  #auth-container {
-    padding: 8px 10px;
-    gap: 10px;
-  }
-
-  #auth-container button {
-    font-size: 0.8em;
-    padding: 4px 10px;
-  }
-
-  #user-details {
-    font-size: 0.9em;
-    max-width: 120px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-}
-
 .progress-bar-inner.is-completed {
   background-color: #00ff00;
   color: #000000;
@@ -311,7 +283,6 @@ hr {
   border: 1px solid #00ff00;
   padding: 5px 10px;
   cursor: pointer;
-  border-radius: 20;
   font-size: 0.9em;
   transition: all 0.2s;
   text-transform: uppercase;
@@ -382,15 +353,6 @@ hr {
   font-size: 1.1em;
   border: 1px solid #00ff00;
   padding: 4px 8px;
-  border-radius: 20;
-}
-
-@media (max-width: 600px) {
-  #project-stats {
-    font-size: 0.9em;
-    padding: 3px 6px;
-    margin-left: 10px;
-  }
 }
 
 #auth-right {
@@ -433,22 +395,12 @@ footer {
   color: #ff0000;
 }
 
-@media (max-width: 600px) {
-  footer {
-    padding: 20px 10px;
-    margin-top: 20px;
-  }
-}
-
 #archive-link-btn {
   font-family: "Pixelify Sans", "Courier New", Courier, monospace;
   padding: 12px 15px;
-
   background-color: transparent;
   color: #00ff00;
   border: 2px solid #00ff00;
-
-  border-radius: 20px;
   cursor: pointer;
   font-size: 18px;
   font-weight: 700;
@@ -525,7 +477,6 @@ main.archive-main {
   padding: 20px;
   background-color: #000000;
   border: 1px solid #333;
-  border-radius: 0;
   box-shadow: none;
 }
 
@@ -538,80 +489,110 @@ main.archive-main {
 .complete-btn,
 #auth-container button,
 #project-stats,
-#archive-link-btn {
+#archive-link-btn,
+main.archive-main,
+main,
+#level-badge,
+#xp-bar-bg,
+#xp-bar-fill {
   border-radius: 0 !important;
 }
 
-main {
-  max-width: 800px;
-}
-
-/* --- STYLE GAMIFICATION (XP & LEVEL) - CENTRÉ --- */
-
-/* On s'assure que le parent est en relatif pour que le centrage fonctionne */
 #auth-container {
-    position: relative; 
-    /* ... tes autres styles flexbox existants restent actifs ... */
+  position: sticky;
+  top: 0;
+  background-color: #000;
+  z-index: 1000;
+  border-bottom: 1px solid #111;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  text-align: right;
+  padding: 10px 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #user-level-container {
-    /* Positionnement absolu pour centrer parfaitement */
-    position: absolute;
-    left: 70%;
-    transform: translateX(-50%);
-    
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Pixelify Sans', monospace;
-    white-space: nowrap; /* Empêche le texte de passer à la ligne */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Pixelify Sans', monospace;
+  white-space: nowrap;
 }
 
 #level-badge {
-    color: #FFD700; /* Or rétro */
-    font-weight: 700;
-    font-size: 1.1em;
-    border: 1px solid #FFD700;
-    padding: 2px 5px;
-    background-color: #000; /* Pour cacher la ligne du dessous si besoin */
+  color: #FFD700;
+  font-weight: 700;
+  font-size: 1.1em;
+  border: 1px solid #FFD700;
+  padding: 2px 5px;
+  background-color: #000;
 }
 
 #xp-bar-bg {
-    width: 120px; /* Un peu plus large maintenant qu'on a de la place */
-    height: 10px;
-    background-color: #333;
-    border: 1px solid #555;
+  width: 120px;
+  height: 10px;
+  background-color: #333;
+  border: 1px solid #555;
 }
 
 #xp-bar-fill {
-    height: 100%;
-    width: 0%;
-    background-color: #FFD700;
-    transition: width 0.5s ease-out;
+  height: 100%;
+  width: 0%;
+  background-color: #FFD700;
+  transition: width 0.5s ease-out;
 }
 
 #xp-text {
-    font-size: 0.9em;
-    color: #AAA;
+  font-size: 0.9em;
+  color: #AAA;
 }
 
-/* --- MOBILE --- */
 @media (max-width: 650px) {
-    /* Sur mobile, on ne peut pas centrer en absolu car ça chevauche les boutons */
-    #user-level-container {
-        position: static; /* On annule le centrage absolu */
-        transform: none;
-        margin-right: auto; /* On le pousse un peu */
-        margin-left: 10px;
-    }
+  #auth-container {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px;
+    justify-content: space-between;
+    gap: 10px;
+  }
 
-    /* On cache la barre et le texte pour gagner de la place */
-    #xp-bar-bg, #xp-text {
-        display: none;
-    }
-    
-    /* On garde juste le badge LVL */
-    #level-badge {
-        font-size: 0.9em;
-    }
+  #user-level-container {
+    position: static;
+    transform: none;
+    left: auto;
+    margin: 0;
+    order: 2;
+  }
+
+  #xp-bar-bg,
+  #xp-text {
+    display: none;
+  }
+
+  #level-badge {
+    font-size: 0.8em;
+    padding: 2px 4px;
+  }
+
+  #auth-right {
+    order: 3;
+    gap: 5px;
+  }
+
+  #auth-right button {
+    font-size: 0.7em;
+    padding: 5px 8px;
+  }
+
+  #project-stats {
+    order: 1;
+    font-size: 0.8em;
+    margin-left: 0;
+  }
 }
