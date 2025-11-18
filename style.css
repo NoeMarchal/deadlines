@@ -518,3 +518,30 @@ footer {
   grid-column: 1 / -1;
   text-align: center;
 }
+
+main.archive-main {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #000000;
+  border: 1px solid #333;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.project-card,
+#project-form input,
+#project-form button,
+.progress-bar-container,
+.progress-bar-inner,
+.delete-btn,
+.complete-btn,
+#auth-container button,
+#project-stats,
+#archive-link-btn {
+  border-radius: 0 !important;
+}
+
+main {
+  max-width: 800px;
+}
