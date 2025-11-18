@@ -39,12 +39,17 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
-// --- CONFIGURATION DU COMPAGNON (MODIFIABLE) ---
+// --- CONFIGURATION DU JEU (XP & ARGENT) ---
+const GAME_CONFIG = {
+    xpReward: 500,      // XP gagnée par projet
+    coinReward: 100,    // Argent gagné par projet (NOUVEAU)
+    levelStep: 1300     // XP nécessaire par niveau
+};
+
 const PET_CONFIG = {
-    costFeed: 10,       // Coût en XP Utilisateur pour nourrir
+    costFeed: 10,       // Coût en PIÈCES pour nourrir
     xpGain: 50,         // XP gagné par le Pet quand on le nourrit
-    costRename: 50,    // Coût en XP Utilisateur pour renommer
-    // Évolution visuelle du compagnon (ASCII Art)
+    costRename: 50,     // Coût en PIÈCES pour renommer
     stages: [
         { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
         { minLvl: 3, art: "[ o_o ]", name: "Robo-Bot" },
@@ -98,8 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (user) {
             currentUser = user;
             uiForLoggedIn(user);
-            syncAllXP(user);
-            loadCompanion(user); // Charge le compagnon à la connexion
+            syncUserData(user); // Charge XP et Pièces
+            loadCompanion(user);
             
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             unsubscribeFromProjects = listenToProjects(user.uid);
@@ -110,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             pendingList.innerHTML = "<p>Veuillez vous connecter pour voir vos projets.</p>";
             userLevelContainer.style.display = 'none';
-            companionSection.style.display = 'none'; // Cache le compagnon si déco
+            companionSection.style.display = 'none';
         }
     });
 
@@ -198,9 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isNaN(startDate) || isNaN(endDate)) return;
 
         let percentage = 0;
-        if (status === "completed") {
-            percentage = 100;
-        } else {
+        if (status === "completed") percentage = 100;
+        else {
             const totalDuration = endDate - startDate;
             const elapsedDuration = today - startDate;
             if (today < startDate) percentage = 0;
@@ -216,7 +220,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const projectCard = document.createElement("div");
         projectCard.className = "project-card";
-        
         if (isUrgent) projectCard.classList.add("is-urgent");
         if (status === "completed") projectCard.classList.add("is-completed");
 
@@ -260,10 +263,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (e.target.classList.contains('complete-btn')) {
             const idToComplete = e.target.getAttribute('data-id');
-            const xpReward = 500; 
+            
             try {
                 await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
-                if (currentUser) updateUserXP(currentUser, xpReward);
+                if (currentUser) {
+                    // On donne l'XP ET les Pièces
+                    updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
+                }
             } catch (error) { console.error(error); }
         }
     });
@@ -276,7 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const snap = await getDoc(userRef);
         let data = snap.data();
         
-        // Création du compagnon par défaut s'il n'existe pas
         if (!data || !data.companion) {
             const initialCompanion = {
                 name: "Glitch",
@@ -285,7 +290,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 maxXp: 100
             };
             await setDoc(userRef, { companion: initialCompanion }, { merge: true });
-            // On recharge les données locales pour l'affichage
             data = (await getDoc(userRef)).data(); 
         }
         renderCompanion(data.companion);
@@ -299,17 +303,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const percent = Math.min((pet.currentXp / pet.maxXp) * 100, 100);
         petXpBar.style.width = `${percent}%`;
 
-        // Trouve le bon ASCII Art selon le niveau
         let currentStage = PET_CONFIG.stages[0];
         for (let stage of PET_CONFIG.stages) {
-            if (pet.level >= stage.minLvl) {
-                currentStage = stage;
-            }
+            if (pet.level >= stage.minLvl) currentStage = stage;
         }
         petVisual.textContent = currentStage.art;
+        
+        // Met à jour les textes des boutons avec les prix en pièces
+        if(feedBtn) feedBtn.innerText = `⚡ Nourrir (${PET_CONFIG.costFeed} ₵)`;
+        if(renameBtn) renameBtn.innerText = `✎ Nom (${PET_CONFIG.costRename} ₵)`;
     }
 
-    // Bouton Nourrir
+    // BOUTON NOURRIR
     if (feedBtn) {
         feedBtn.addEventListener('click', async () => {
             if (!currentUser) return;
@@ -318,80 +323,83 @@ document.addEventListener("DOMContentLoaded", () => {
             const snap = await getDoc(userRef);
             const data = snap.data();
             
-            const userXp = data.xp || 0;
+            // On récupère les pièces (Coins)
+            const userCoins = data.coins || 0;
             
-            if (userXp < PET_CONFIG.costFeed) {
-                petMessage.textContent = "⚠️ XP Insuffisante !";
+            // VÉRIFICATION DES PIÈCES (PAS XP)
+            if (userCoins < PET_CONFIG.costFeed) {
+                petMessage.textContent = "⚠️ Pas assez de crédits !";
                 petMessage.style.color = "red";
                 setTimeout(() => petMessage.textContent = "En attente...", 2000);
                 return;
             }
 
             let pet = data.companion;
-            let newUserXp = userXp - PET_CONFIG.costFeed;
+            let newUserCoins = userCoins - PET_CONFIG.costFeed; // On déduit les pièces
             
             pet.currentXp += PET_CONFIG.xpGain;
             
-            // Logique de Level Up
             if (pet.currentXp >= pet.maxXp) {
                 pet.level++;
-                pet.currentXp = pet.currentXp - pet.maxXp; // Reporte le surplus
-                pet.maxXp = Math.floor(pet.maxXp * 1.3); // Augmente la difficulté
+                pet.currentXp = pet.currentXp - pet.maxXp;
+                pet.maxXp = Math.floor(pet.maxXp * 1.3);
                 petMessage.textContent = "⚡ UPGRADE RÉUSSI !";
                 petMessage.style.color = "#00ff00";
             } else {
-                petMessage.textContent = `Miam ! (+${PET_CONFIG.xpGain} XP)`;
+                petMessage.textContent = `Miam ! (+${PET_CONFIG.xpGain} XP Pet)`;
                 petMessage.style.color = "#aaa";
             }
 
-            // Sauvegarde
+            // Sauvegarde (On touche aux coins, pas à l'XP user)
             await updateDoc(userRef, {
-                xp: newUserXp,
+                coins: newUserCoins, 
                 companion: pet
             });
 
-            // Mise à jour UI
-            updateLevelUI(newUserXp, Math.floor(newUserXp / 500) + 1);
+            updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
             renderCompanion(pet);
             setTimeout(() => petMessage.textContent = "En attente...", 2000);
         });
     }
 
-    // Bouton Renommer
+    // BOUTON RENOMMER
     if (renameBtn) {
         renameBtn.addEventListener('click', async () => {
             if (!currentUser) return;
 
-            const newName = prompt(`Nouveau nom du système (Coût: ${PET_CONFIG.costRename} XP) :`);
+            const newName = prompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`);
             if (!newName || newName.trim() === "") return;
 
             const userRef = doc(db, "users", currentUser.uid);
             const snap = await getDoc(userRef);
             const data = snap.data();
             
-            if ((data.xp || 0) < PET_CONFIG.costRename) {
-                alert("XP système insuffisante pour le renommage.");
+            const userCoins = data.coins || 0;
+
+            if (userCoins < PET_CONFIG.costRename) {
+                alert("Crédits insuffisants.");
                 return;
             }
 
             let pet = data.companion;
             pet.name = newName.trim();
-            let newUserXp = data.xp - PET_CONFIG.costRename;
+            let newUserCoins = userCoins - PET_CONFIG.costRename;
 
             await updateDoc(userRef, {
-                xp: newUserXp,
+                coins: newUserCoins,
                 companion: pet
             });
 
-            updateLevelUI(newUserXp, Math.floor(newUserXp / 500) + 1);
+            updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
             renderCompanion(pet);
         });
     }
 
-function uiForLoggedIn(user) {
+    // --- GESTION GLOBALE (XP + COINS) ---
+
+    function uiForLoggedIn(user) {
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
-        // On garde juste la première partie de l'email pour faire propre
         userDetails.textContent = `Opérateur: ${user.email.split('@')[0]}`;
         projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
@@ -407,46 +415,71 @@ function uiForLoggedIn(user) {
         projectStatsDiv.style.display = "none";
     }
 
-    async function updateUserXP(user, xpGained = 0) {
+    // Nouvelle fonction unifiée pour gagner XP et Pièces
+    async function updateUserStats(user, xpGained = 0, coinsGained = 0) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
-        let currentXP = userSnap.exists() ? (userSnap.data().xp || 0) : 0;
+        
+        let currentXP = 0;
+        let currentCoins = 0;
+
+        if (userSnap.exists()) {
+            const data = userSnap.data();
+            currentXP = data.xp || 0;
+            currentCoins = data.coins || 0;
+        }
         
         let newXP = currentXP + xpGained;
-        
-        // --- CHANGEMENT ICI : Division par 1300 ---
-        let newLevel = Math.floor(newXP / 1300) + 1; 
+        let newCoins = currentCoins + coinsGained;
+        let newLevel = Math.floor(newXP / GAME_CONFIG.levelStep) + 1;
 
-        await setDoc(userRef, { xp: newXP, level: newLevel, email: user.email }, { merge: true });
-        updateLevelUI(newXP, newLevel);
-        if (xpGained > 0) alert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP`);
+        await setDoc(userRef, { 
+            xp: newXP, 
+            coins: newCoins,
+            level: newLevel, 
+            email: user.email 
+        }, { merge: true });
+
+        updateTopBarUI(newXP, newLevel, newCoins);
+        
+        if (xpGained > 0 || coinsGained > 0) {
+            alert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
+        }
     }
 
-    async function syncAllXP(user) {
+    async function syncUserData(user) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         
         if (userSnap.exists()) {
             const data = userSnap.data();
-            // On s'assure que l'affichage est synchro avec la base de données
-            updateLevelUI(data.xp || 0, data.level || 1);
+            // Si 'coins' n'existe pas encore (ancien user), on met 0
+            const coins = data.coins || 0;
+            updateTopBarUI(data.xp || 0, data.level || 1, coins);
+        } else {
+            // Initialisation nouveau user
+            updateTopBarUI(0, 1, 0);
         }
     }
 
-    function updateLevelUI(xp, level) {
+    function updateTopBarUI(xp, level, coins) {
         const levelBadge = document.getElementById('level-badge');
         const xpBarFill = document.getElementById('xp-bar-fill');
         const xpText = document.getElementById('xp-text');
+        const coinsDisplay = document.getElementById('user-coins'); // L'élément ajouté au HTML
         
         userLevelContainer.style.display = 'flex';
         levelBadge.textContent = `LVL ${level}`;
         
-        // Affichage type "450 / 1300 XP" pour savoir combien il reste
-        const currentLevelXp = xp % 1300;
-        xpText.textContent = `${currentLevelXp} / 1300 XP`;
+        const currentLevelXp = xp % GAME_CONFIG.levelStep;
+        xpText.textContent = `${currentLevelXp} / ${GAME_CONFIG.levelStep} XP`;
         
-        // --- CHANGEMENT ICI : Calcul du pourcentage sur 1300 ---
-        const progress = (currentLevelXp) / 1300 * 100;
+        const progress = (currentLevelXp) / GAME_CONFIG.levelStep * 100;
         xpBarFill.style.width = `${progress}%`;
+
+        // Mise à jour des pièces
+        if(coinsDisplay) {
+            coinsDisplay.textContent = `${coins} ₵`;
+        }
     }
 });
