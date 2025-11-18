@@ -27,63 +27,143 @@ header h1 {
 }
 
 /* --- MISE EN PAGE 2 COLONNES --- */
-
 main {
-    /* On augmente la largeur max pour avoir de la place pour les 2 colonnes */
-    max-width: 1200px; 
-    margin: 20px auto;
-    padding: 20px;
-    background-color: transparent; /* On retire le fond noir du main pour aérer */
+    max-width: 1100px; /* Un peu plus large pour respirer */
+    margin: 40px auto; /* Marge en haut pour descendre un peu le tout */
+    padding: 0 20px;
+    background-color: transparent;
     border: none;
     box-shadow: none;
 }
 
 .dashboard-container {
     display: flex;
-    gap: 30px; /* Espace entre le compagnon et les projets */
-    align-items: flex-start; /* Aligne tout en haut */
+    gap: 40px; /* Plus d'espace entre le compagnon et le formulaire */
+    align-items: flex-start; 
 }
 
-/* La Colonne de Gauche (Compagnon) */
+/* --- BARRE LATÉRALE (GAUCHE) --- */
 .left-sidebar {
-    width: 300px;     /* Largeur fixe pour le compagnon */
-    flex-shrink: 0;   /* Empêche le compagnon de s'écraser */
-    position: sticky; /* (Optionnel) Le compagnon reste visible quand tu scrolles */
-    top: 80px;        /* Décalage par rapport au haut si sticky */
+    width: 280px; 
+    flex-shrink: 0;
+    /* ASTUCE D'ALIGNEMENT :
+       On ajoute une marge en haut pour que le HAUT du cadre vert
+       s'aligne parfaitement avec le HAUT du titre "AJOUTER UN PROJET" à droite.
+    */
+    margin-top: 58px; 
 }
 
-/* La Colonne de Droite (Projets) */
 .right-content {
-    flex-grow: 1;     /* Prend tout le reste de la place */
-    min-width: 0;     /* Évite des bugs d'affichage sur certains navigateurs */
+    flex-grow: 1;
+    min-width: 0; 
 }
 
-/* Styles spécifiques pour que le compagnon soit beau dans la sidebar */
+/* --- STYLE DU COMPAGNON (FIX) --- */
 #companion-section {
-    margin-bottom: 0;
-    height: auto;
     background-color: #000;
-    border: 1px solid #00ff00;
+    border: 2px solid #00ff00; /* Bordure un peu plus épaisse */
+    padding: 25px 20px; /* Espace interne (Haut/Bas Gauche/Droite) */
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); /* Légère lueur verte */
+    
+    /* Flexbox pour tout centrer verticalement à l'intérieur */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
 
+.companion-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* On empile le Titre et le Niveau */
+    align-items: center;
+    gap: 5px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.companion-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #00ff00;
+}
+
+#pet-level-display {
+    font-size: 0.9em;
+    color: #FFD700; /* Couleur Or pour le niveau */
+    font-weight: bold;
+}
+
+#pet-name-display {
+    font-size: 1.1em;
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+#pet-visual {
+    font-family: 'Courier New', monospace;
+    font-size: 1.8em; /* Un peu plus gros */
+    color: #00ff00;
+    margin: 10px 0;
+    white-space: pre;
+    text-shadow: 0 0 8px #00ff00;
+    min-height: 60px; /* Hauteur fixe pour éviter que ça saute quand il change */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* BARRE D'XP DU PET */
+.pet-status-bar {
+    width: 100%;
+    height: 8px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#pet-xp-bar-inner {
+    height: 100%;
+    background-color: #00ff00;
+    transition: width 0.3s ease;
+}
+
+/* --- BOUTONS DU COMPAGNON (Correction des boutons blancs) --- */
 .pet-actions {
     display: flex;
+    gap: 10px;
+    width: 100%;
     justify-content: center;
-    gap: 5px;
-    margin-top: 10px;
 }
 
-/* RESPONSIVE : Sur mobile, on remet tout en colonne */
-@media (max-width: 900px) {
-    .dashboard-container {
-        flex-direction: column;
-    }
-    
-    .left-sidebar {
-        width: 100%;
-        position: static;
-        margin-bottom: 20px;
-    }
+.pet-btn {
+    background-color: #000; /* Fond noir */
+    color: #fff;            /* Texte blanc */
+    border: 1px solid #555; /* Bordure grise */
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: 'Pixelify Sans', monospace;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    flex: 1; /* Les boutons prennent toute la largeur dispo */
+}
+
+.pet-btn:hover {
+    border-color: #00ff00;
+    color: #00ff00;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+}
+
+#pet-message {
+    font-size: 0.8em;
+    min-height: 1.2em;
+    color: #777;
 }
 
 hr {
