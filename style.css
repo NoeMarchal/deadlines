@@ -1,45 +1,35 @@
-/* --------------------------------- */
-/* ---- STYLE "NOTHING" TRACKER ---- */
-/* --------------------------------- */
-
-/* 1. Importation de la police "Pixel" */
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap');
 
-/* 2. Style de base (Fond noir, police pixel) */
 body {
-    /* C'est la police qui donne 80% du style */
     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
     background-color: #000000;
     color: #FFFFFF;
     margin: 0;
     padding: 20px;
-    /* Anti-aliasing désactivé pour un look pixel net */
     font-smooth: never;
     -webkit-font-smoothing: none;
 }
 
-/* 3. Typographie (Majuscules, espacement) */
 h1, h2, h3, button, label {
     text-transform: uppercase;
-    letter-spacing: 1.5px; /* Look "tech" espacé */
+    letter-spacing: 1.5px;
 }
 
 header h1 {
     text-align: center;
     color: #FFFFFF;
-    font-size: 2.5em; /* Plus grand */
+    font-size: 2.5em;
     font-weight: 700;
 }
 
-/* 4. Conteneur principal (Bordures grises) */
 main {
     max-width: 800px;
     margin: 20px auto;
     padding: 20px;
     background-color: #000000;
-    border: 1px solid #333; /* Bordure grise foncée */
-    border-radius: 0; /* Angles vifs */
-    box-shadow: none; /* Pas d'ombre ! */
+    border: 1px solid #333;
+    border-radius: 20;
+    box-shadow: none;
 }
 
 hr {
@@ -47,7 +37,6 @@ hr {
     border-top: 1px solid #333;
 }
 
-/* 5. Formulaire "Tech" */
 #form-container h2 {
     color: #FFF;
     border-bottom: 1px solid #333;
@@ -62,39 +51,34 @@ hr {
 }
 
 #project-form label {
-    color: #AAA; /* Gris clair pour les labels */
+    color: #AAA;
     font-size: 0.9em;
     padding-left: 2px;
-    align-self: end; /* Aligne le label au-dessus de l'input */
+    align-self: end;
 }
 
-/* Style des champs de saisie */
 #project-form input {
     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
-    background-color: #111; /* Fond noir légèrement grisé */
+    background-color: #111;
     color: #FFF;
     border: 1px solid #555;
     padding: 10px;
-    border-radius: 0;
+    border-radius: 20;
     font-size: 1.1em;
 }
 
 #project-form input[type="text"] {
-    grid-column: 1 / -1; /* Le nom prend toute la largeur */
+    grid-column: 1 / -1;
 }
 
-/* Style du bouton "Ajouter" (L'ACCENT ROUGE) */
 #project-form button {
     grid-column: 1 / -1;
     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
     padding: 12px 15px;
-    
-    /* Style "Outline" rouge */
     background-color: transparent;
     color: #FF0000;
     border: 2px solid #FF0000;
-    
-    border-radius: 0;
+    border-radius: 20;
     cursor: pointer;
     font-size: 18px;
     font-weight: 700;
@@ -102,16 +86,14 @@ hr {
 }
 
 #project-form button:hover {
-    /* Inversion au survol */
     background-color: #FF0000;
     color: #000000;
 }
 
-/* 6. Cartes de projet */
 .project-card {
     background-color: #000;
     border: 1px solid #333;
-    border-radius: 0;
+    border-radius: 20;
     padding: 20px;
     margin-bottom: 15px;
 }
@@ -134,11 +116,10 @@ hr {
     color: #AAA;
 }
 
-/* 7. Barre de progression (L'ACCENT ROUGE) */
 .progress-bar-container {
     width: 100%;
-    background-color: #333; /* Piste grise foncée */
-    border-radius: 0;
+    background-color: #333;
+    border-radius: 20;
     height: 25px;
     overflow: hidden;
     border: none;
@@ -147,20 +128,17 @@ hr {
 .progress-bar-inner {
     height: 100%;
     width: 0%;
-    background-color: #FF0000; /* Remplissage ROUGE */
-    border-radius: 0;
+    background-color: #FF0000;
+    border-radius: 20;
     transition: width 0.5s ease-in-out;
-    
-    /* Pourcentage */
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000000; /* Texte en NOIR sur fond rouge */
+    color: #000000;
     font-weight: 700;
     font-size: 16px;
 }
 
-/* 8. Bouton "Supprimer" (Minimaliste) */
 .delete-btn {
     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
     background-color: transparent;
@@ -168,7 +146,7 @@ hr {
     border: 1px solid #555;
     padding: 5px 10px;
     cursor: pointer;
-    border-radius: 0;
+    border-radius: 20;
     font-size: 0.9em;
     transition: all 0.2s;
     text-transform: uppercase;
@@ -179,13 +157,7 @@ hr {
     border-color: #FF0000;
 }
 
-/* ---------------------------------- */
-/* ---- SECTION RESPONSIVE (MOBILE) --- */
-/* ---------------------------------- */
-
 @media (max-width: 600px) {
-
-    /* 1. Ajuster les paddings généraux */
     body {
         padding: 10px;
     }
@@ -193,119 +165,97 @@ hr {
     main {
         padding: 15px;
     }
-
-    /* 2. Empiler le formulaire (le plus important) */
     #project-form {
-        /* On passe d'une grille 2 colonnes à 1 colonne */
         grid-template-columns: 1fr;
-        gap: 15px; /* On réduit un peu l'espace */
+        gap: 15px;
     }
     
-    /* On force les champs date/début à prendre toute la largeur */
     #project-form input[type="date"] {
         width: 100%;
-        box-sizing: border-box; /* Pour que le padding soit inclus */
+        box-sizing: border-box;
     }
     
     #project-form label {
-        /* S'assure que le label est au-dessus de l'input */
         padding-bottom: 2px;
     }
-
-    /* 3. Empiler l'en-tête des cartes de projet */
     .project-header {
-        flex-direction: column; /* Empile le titre et les dates */
-        align-items: flex-start; /* Aligne tout à gauche */
-        gap: 8px; /* Ajoute un espace entre le titre et les dates */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
     }
     
     .project-dates {
-        font-size: 0.9em; /* Dates un peu plus petites */
+        font-size: 0.9em;
     }
 
-    /* 4. Ajuster la taille des polices */
     header h1 {
-        font-size: 2em; /* Titre principal plus petit */
+        font-size: 2em;
     }
     
     .project-header h3 {
-        font-size: 1.3em; /* Titre du projet plus petit */
+        font-size: 1.3em;
     }
     
     .progress-bar-inner {
-        font-size: 14px; /* Pourcentage plus petit */
+        font-size: 14px;
     }
 }
 
-/* ---------------------------------- */
-/* ---- STYLE POUR PROJET URGENT ---- */
-/* ---------------------------------- */
-
 .project-card.is-urgent {
-    /* On force la bordure en ROUGE "Nothing" */
     border-color: #FF0000;
-    border-width: 2px; /* Un peu plus épais pour l'alerte */
+    border-width: 2px;
 }
 
 .project-card.is-urgent .project-header h3 {
-    /* On passe aussi le titre en rouge pour plus d'impact */
     color: #FF0000;
 }
 
-/* ---------------------------------- */
-/* ---- STYLE AUTHENTIFICATION ---- */
-/* ---------------------------------- */
-/* ---------------------------------- */
-/* ---- STYLE AUTHENTIFICATION (AMÉLIORÉ) ---- */
-/* ---------------------------------- */
 #auth-container {
-    text-align: right; /* Aligner à droite par défaut */
-    padding: 10px 20px; /* Moins de padding */
-    width: 100%; /* Occupe toute la largeur */
-    box-sizing: border-box; /* Inclure le padding dans la largeur */
-    position: sticky; /* Reste en haut lors du défilement */
+    text-align: right;
+    padding: 10px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    position: sticky;
     top: 0;
-    background-color: #000; /* Fond noir pour qu'il n'y ait pas de "trou" */
-    z-index: 1000; /* Assure qu'il est au-dessus des autres éléments */
-    border-bottom: 1px solid #111; /* Petite ligne discrète en bas */
-    display: flex; /* Utilise flexbox pour l'alignement */
-    justify-content: space-between; /* Aligne le contenu à droite */
-    align-items: center; /* Centre verticalement */
-    gap: 15px; /* Espace entre les éléments */
+    background-color: #000;
+    z-index: 1000;
+    border-bottom: 1px solid #111;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
 }
 
 #auth-container button {
     font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
     text-transform: uppercase;
-    font-size: 0.9em; /* Plus petit */
-    padding: 6px 15px; /* Plus grand horizontalement */
-    border-radius: 0;
+    font-size: 0.9em;
+    padding: 6px 15px;
+    border-radius: 20;
     cursor: pointer;
     background: transparent;
     transition: all 0.2s;
-    line-height: 1; /* Assure un bon alignement du texte */
+    line-height: 1;
 }
 
-/* Style des boutons génériques (plus discrets) */
 #login-btn, #logout-btn {
-    color: #AAA; /* Gris clair */
-    border: 1px solid #555; /* Bordure gris moyen */
+    color: #AAA;
+    border: 1px solid #555;
 }
 
 #login-btn:hover, #logout-btn:hover {
-    background: #555; /* Inversion de couleur au survol */
+    background: #555;
     color: #000;
 }
 
 #user-details {
     color: #AAA;
-    font-size: 1em; /* Ajusté */
-    margin-right: 0; /* Plus de marge ici, flexbox gère ça */
+    font-size: 1em;
+    margin-right: 0;
 }
 
-/* Style spécifique pour le logout quand l'utilisateur est connecté */
 #logout-btn {
-    border-color: #FF0000; /* La déconnexion reste un peu plus "sérieuse" */
+    border-color: #FF0000;
     color: #FF0000;
 }
 #logout-btn:hover {
@@ -313,7 +263,6 @@ hr {
     color: #000;
 }
 
-/* Media query pour le mobile */
 @media (max-width: 600px) {
     #auth-container {
         padding: 8px 10px;
@@ -325,20 +274,19 @@ hr {
     }
     #user-details {
         font-size: 0.9em;
-        /* Peut-être couper l'email si trop long */
         max-width: 120px; 
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
 }
-/* Style de la barre de progression VERTE */ 
+
  .progress-bar-inner.is-completed { 
-     background-color: #00FF00; /* Un vert "pixel" vif */ 
-     color: #000000; /* Texte noir pour la lisibilité */ 
+     background-color: #00FF00;
+     color: #000000; 
  } 
 
- /* Conteneur pour les boutons d'action */ 
+
  .project-actions { 
      margin-top: 15px; 
      display: flex; 
@@ -346,15 +294,14 @@ hr {
      align-items: center; 
  } 
 
- /* Style du nouveau bouton "Terminer" (style VERT) */ 
  .complete-btn { 
      font-family: 'Pixelify Sans', 'Courier New', Courier, monospace; 
      background-color: transparent; 
-     color: #00FF00; /* Vert vif */ 
+     color: #00FF00;
      border: 1px solid #00FF00; 
      padding: 5px 10px; 
      cursor: pointer; 
-     border-radius: 0; 
+     border-radius: 20; 
      font-size: 0.9em; 
      transition: all 0.2s; 
      text-transform: uppercase; 
@@ -365,90 +312,68 @@ hr {
      color: #000000; 
  } 
 
- /* Style du texte "TERMINÉ" */ 
  .project-completed-text { 
      font-size: 1em; 
      font-weight: 700; 
-     color: #00FF00; /* Vert vif */ 
+     color: #00FF00;
      margin-right: 10px; 
  } 
 
- /* On grise la carte du projet terminé */ 
  .project-card.is-completed { 
-     border-color: #333; /* Retour à une bordure normale */ 
+     border-color: #333;
  } 
 
  .project-card.is-completed .project-header h3, 
  .project-card.is-completed .project-dates { 
-     color: #777; /* On grise le texte */ 
- } 
+     color: #777;
+ }
 
- /* On s'assure que le titre "urgent" n'est plus rouge */ 
  .project-card.is-completed.is-urgent .project-header h3 { 
      color: #777; 
  }
 
- /* ---------------------------------- */ 
- /* ---- STYLE DU TABLEAU DE BORD ---- */ 
- /* ---------------------------------- */ 
-
- /* On transforme le conteneur principal en grille */
  #projects-container {
      display: grid;
-     grid-template-columns: 1fr 1fr; /* Deux colonnes de taille égale */
-     gap: 20px; /* Espace entre les deux colonnes */
-     
-     /* On enlève l'ancienne bordure/padding de la section */
+     grid-template-columns: 1fr 1fr;
+     gap: 20px;
      border: none;
      padding: 0;
  }
 
- /* Style pour le titre de chaque colonne */
  .project-column h2 {
     color: #FFF;
     border-bottom: 1px solid #333;
     padding-bottom: 10px;
-    margin-top: 0; /* On enlève la marge du haut */
+    margin-top: 0;
  }
 
- /* On ré-applique le style "pas de projet" aux nouvelles listes */
  #pending-projects-list p,
  #completed-projects-list p {
      color: #777;
      font-size: 1.1em;
  }
 
-
- /* ---------------------------------- */ 
- /* ---- RESPONSIVE (COLONNES)     ---- */ 
- /* ---------------------------------- */ 
-
  @media (max-width: 800px) {
-     /* Sur les écrans plus petits, on repasse à UNE seule colonne */
      #projects-container {
          grid-template-columns: 1fr; 
      }
-
-     /* On ajoute un espace pour séparer les listes sur mobile */
      #completed-column {
          margin-top: 40px;
      }
  }
 
- /* Style du bloc de statistiques */
 #project-stats {
-    display: flex; /* Pour aligner les nombres */
+    display: flex;
     align-items: center;
-    gap: 5px; /* Petit espace entre les éléments */
-    color: #00FF00; /* Vert pour les chiffres clés */
+    gap: 5px;
+    color: #00FF00;
     font-weight: 700;
     font-size: 1.1em;
-    border: 1px solid #00FF00; /* Bordure verte pour le mettre en valeur */
+    border: 1px solid #00FF00;
     padding: 4px 8px;
-    border-radius: 0;
+    border-radius: 20;
 }
 
-/* Sur mobile, on peut réduire la taille */
 @media (max-width: 600px) {
     #project-stats {
         font-size: 0.9em;
@@ -459,5 +384,5 @@ hr {
 #auth-right {
     display: flex;
     align-items: center;
-    gap: 15px; /* On remet le 'gap' ici */
+    gap: 15px;
 }
