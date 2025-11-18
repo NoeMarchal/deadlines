@@ -22,6 +22,76 @@ import {
     onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
+// --- SYSTÈME D'ALERTES PERSONNALISÉES ---
+const modalOverlay = document.getElementById('custom-modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const modalInput = document.getElementById('modal-input');
+const btnOk = document.getElementById('modal-btn-ok');
+const btnCancel = document.getElementById('modal-btn-cancel');
+
+// Fonction générique pour afficher la boîte
+function showCustomModal(type, message, placeholder = "") {
+    return new Promise((resolve) => {
+        modalOverlay.style.display = 'flex';
+        modalText.textContent = message;
+        modalInput.value = "";
+        
+        // Reset des affichages
+        modalInput.style.display = 'none';
+        btnCancel.style.display = 'none';
+        btnOk.textContent = "OK";
+
+        if (type === 'alert') {
+            modalTitle.textContent = "MESSAGE SYSTÈME";
+        } 
+        else if (type === 'confirm') {
+            modalTitle.textContent = "CONFIRMATION REQUISE";
+            btnCancel.style.display = 'block';
+            btnOk.textContent = "OUI";
+        } 
+        else if (type === 'prompt') {
+            modalTitle.textContent = "SAISIE REQUISE";
+            modalInput.style.display = 'block';
+            modalInput.placeholder = placeholder;
+            modalInput.focus();
+            btnCancel.style.display = 'block';
+            btnOk.textContent = "VALIDER";
+        }
+
+        // Gestion des clics (Nettoyage des anciens écouteurs via cloneNode ou flag simple)
+        // Méthode simple : on remplace les boutons pour virer les anciens listeners
+        const newBtnOk = btnOk.cloneNode(true);
+        const newBtnCancel = btnCancel.cloneNode(true);
+        btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+        btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+        // Nouveaux écouteurs
+        newBtnOk.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            if (type === 'prompt') resolve(modalInput.value);
+            else resolve(true);
+        });
+
+        newBtnCancel.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            resolve(false); // ou null pour prompt
+        });
+        
+        // Touche Entrée pour valider
+        if(type === 'prompt') {
+             modalInput.onkeydown = (e) => {
+                if(e.key === 'Enter') newBtnOk.click();
+             };
+        }
+    });
+}
+
+// Remplaçants faciles à utiliser
+const myAlert = (msg) => showCustomModal('alert', msg);
+const myConfirm = (msg) => showCustomModal('confirm', msg);
+const myPrompt = (msg, place) => showCustomModal('prompt', msg, place);
+
 // --- CONFIGURATION FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg",
@@ -129,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const end = endDateInput.value;
 
         if (new Date(start).getTime() >= new Date(end).getTime()) {
-            alert("La date de fin doit être après la date de début !");
+            awaitalert("La date de fin doit être après la date de début !");
             return;
         }
 
@@ -377,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const userCoins = data.coins || 0;
 
             if (userCoins < PET_CONFIG.costRename) {
-                alert("Crédits insuffisants.");
+                awaitalert("Crédits insuffisants.");
                 return;
             }
 
@@ -443,7 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTopBarUI(newXP, newLevel, newCoins);
         
         if (xpGained > 0 || coinsGained > 0) {
-            alert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
+            awaitalert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
         }
     }
 
