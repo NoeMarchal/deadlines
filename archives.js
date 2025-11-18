@@ -5,7 +5,6 @@ import {
     onSnapshot,
     deleteDoc,
     doc,
-    updateDoc,
     query,
     orderBy,
     where,
@@ -18,7 +17,6 @@ import {
     onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
-
 const firebaseConfig = {
     apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg",
     authDomain: "mes-deadlines.firebaseapp.com",
@@ -29,59 +27,103 @@ const firebaseConfig = {
     measurementId: "G-3TTTRJC3QD",
 };
 
-
-const projectStatsDiv = document.getElementById("project-stats");
-const completedCountSpan = document.getElementById("completed-count");
-const totalCountSpan = document.getElementById("total-count");
-
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
+// --- SYSTÈME D'ALERTES PERSONNALISÉES (Code copié pour les archives) ---
+const modalOverlay = document.getElementById('custom-modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const modalInput = document.getElementById('modal-input');
+const btnOk = document.getElementById('modal-btn-ok');
+const btnCancel = document.getElementById('modal-btn-cancel');
 
+function showCustomModal(type, message, placeholder = "") {
+    return new Promise((resolve) => {
+        if (!modalOverlay) {
+            // Fallback si le HTML n'est pas chargé
+            if (type === 'confirm') return resolve(confirm(message));
+            alert(message); return resolve(true);
+        }
+        modalOverlay.style.display = 'flex';
+        modalText.textContent = message;
+        
+        if(modalInput) {
+            modalInput.value = "";
+            modalInput.style.display = 'none';
+        }
+        
+        if(btnCancel) btnCancel.style.display = 'none';
+        if(btnOk) btnOk.textContent = "OK";
+
+        if (type === 'confirm') {
+            if(modalTitle) modalTitle.textContent = "CONFIRMATION REQUISE";
+            if(btnCancel) btnCancel.style.display = 'block';
+            if(btnOk) btnOk.textContent = "OUI";
+        } else {
+            if(modalTitle) modalTitle.textContent = "MESSAGE SYSTÈME";
+        }
+
+        // Remplacement des boutons pour supprimer les anciens écouteurs
+        const newBtnOk = btnOk.cloneNode(true);
+        const newBtnCancel = btnCancel.cloneNode(true);
+        btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+        btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+        newBtnOk.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            resolve(true);
+        });
+
+        newBtnCancel.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            resolve(false);
+        });
+    });
+}
+
+const myConfirm = (msg) => showCustomModal('confirm', msg);
+
+// --- LOGIQUE PRINCIPALE DES ARCHIVES ---
 document.addEventListener("DOMContentLoaded", () => {
-
     const archiveGrid = document.getElementById("archive-grid");
-
-
+    const projectStatsDiv = document.getElementById("project-stats");
+    const completedCountSpan = document.getElementById("completed-count");
+    const totalCountSpan = document.getElementById("total-count");
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
     const userDetails = document.getElementById("user-details");
 
-    let currentUser = null;
     let unsubscribeFromProjects = null;
 
-    loginBtn.addEventListener("click", () => {
-        signInWithPopup(auth, provider).catch((error) => console.error(error));
-    });
+    if(loginBtn) {
+        loginBtn.addEventListener("click", () => {
+            signInWithPopup(auth, provider).catch((error) => console.error(error));
+        });
+    }
 
-    logoutBtn.addEventListener("click", () => {
-        signOut(auth).catch((error) => console.error(error));
-    });
-
+    if(logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            signOut(auth).catch((error) => console.error(error));
+        });
+    }
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            currentUser = user;
             uiForLoggedIn(user);
-
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             unsubscribeFromProjects = listenToProjects(user.uid);
         } else {
-            currentUser = null;
             uiForLoggedOut();
-
             if (unsubscribeFromProjects) unsubscribeFromProjects();
-            archiveGrid.innerHTML =
-                "<p>Veuillez vous connecter pour voir vos archives.</p>";
+            if(archiveGrid) archiveGrid.innerHTML = "<p>Veuillez vous connecter pour voir vos archives.</p>";
         }
     });
 
     function listenToProjects(userId) {
-
         const q = query(
             projectsCollection,
             where("userId", "==", userId),
@@ -89,19 +131,16 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         return onSnapshot(q, (snapshot) => {
-
+            if(!archiveGrid) return;
             archiveGrid.innerHTML = "";
 
-            let pendingCount = 0;
             let completedCount = 0;
             let totalProjects = snapshot.size;
 
             if (snapshot.empty) {
-
                 archiveGrid.innerHTML = "<p>Aucun projet terminé.</p>";
-
-                completedCountSpan.textContent = 0;
-                totalCountSpan.textContent = 0;
+                if(completedCountSpan) completedCountSpan.textContent = 0;
+                if(totalCountSpan) totalCountSpan.textContent = 0;
                 return;
             }
 
@@ -113,13 +152,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (status === "completed") {
                         archiveGrid.appendChild(projectCard);
                         completedCount++;
-                    } else {
-
-                        pendingCount++;
                     }
                 } else {
-                    console.error("Impossible d'afficher un projet:", doc.data());
-                    totalProjects--;
+                   totalProjects--;
                 }
             });
 
@@ -127,102 +162,70 @@ document.addEventListener("DOMContentLoaded", () => {
                 archiveGrid.innerHTML = "<p>Aucun projet terminé.</p>";
             }
 
-            completedCountSpan.textContent = completedCount;
-            totalCountSpan.textContent = totalProjects;
+            if(completedCountSpan) completedCountSpan.textContent = completedCount;
+            if(totalCountSpan) totalCountSpan.textContent = totalProjects;
         });
     }
 
     function renderProject(doc) {
         const project = doc.data();
         const projectId = doc.id;
-        const status = project.status || "pending";
-        const today = new Date().getTime();
-        const startDate = new Date(project.start).getTime();
-        const endDate = new Date(project.end).getTime();
-        if (isNaN(startDate) || isNaN(endDate)) return;
-
-        let percentage = 0;
-        if (status === "completed") {
-            percentage = 100;
-        } else {
-            const totalDuration = endDate - startDate;
-            const elapsedDuration = today - startDate;
-            if (today < startDate) percentage = 0;
-            else if (today > endDate) percentage = 100;
-            else if (totalDuration > 0)
-                percentage = (elapsedDuration / totalDuration) * 100;
-            percentage = Math.round(Math.max(0, Math.min(percentage, 100)));
-        }
-
-        const msPerDay = 1000 * 60 * 60 * 24;
-        const remainingDays = (endDate - today) / msPerDay;
-        const isUrgent =
-            status === "pending" && percentage < 100 && remainingDays <= 3;
-
+        
         const projectCard = document.createElement("div");
-        projectCard.className = "project-card";
-        if (isUrgent) projectCard.classList.add("is-urgent");
-        if (status === "completed") projectCard.classList.add("is-completed");
-
-        const projectActionsHTML = `
-             <div class="project-actions">
-                 ${status === "pending"
-                ?
-                `<span style="color: #777;">En cours...</span>`
-                : '<span class="project-completed-text">TERMINÉ</span>'
-            }
-                 <button class="delete-btn" data-id="${projectId}">Supprimer</button>
-             </div>
-         `;
-
-        const progressInnerClass = status === "completed" ? "is-completed" : "";
+        projectCard.className = "project-card is-completed";
 
         projectCard.innerHTML = `
             <div class="project-header">
                 <h3>${project.name}</h3>
                 <span class="project-dates">
-                    ${new Date(
-            project.start
-        ).toLocaleDateString()} - ${new Date(
-            project.end
-        ).toLocaleDateString()}
+                    ${new Date(project.start).toLocaleDateString()} - ${new Date(project.end).toLocaleDateString()}
                 </span>
             </div>
             <div class="progress-bar-container">
-                <div class="progress-bar-inner ${progressInnerClass}" style="width: ${percentage}%;">
-                    ${percentage}%
+                <div class="progress-bar-inner is-completed" style="width: 100%;">
+                    100%
                 </div>
             </div>
-            ${projectActionsHTML}
+            <div class="project-actions">
+                 <span class="project-completed-text">TERMINÉ</span>
+                 <button class="delete-btn" data-id="${projectId}">Supprimer</button>
+            </div>
         `;
         return projectCard;
     }
-    archiveGrid.addEventListener("click", async (e) => {
-        if (e.target.classList.contains("delete-btn")) {
-            const idToDelete = e.target.getAttribute("data-id");
-            if (!confirm("Êtes-vous sûr de vouloir supprimer ce projet archivé ?")) {
-                return;
+
+    // GESTION DU CLIC (Suppression)
+    if(archiveGrid) {
+        archiveGrid.addEventListener("click", async (e) => {
+            if (e.target.classList.contains("delete-btn")) {
+                const idToDelete = e.target.getAttribute("data-id");
+                
+                // ICI ON UTILISE NOTRE MODALE PERSONNALISÉE
+                const confirmed = await myConfirm("Êtes-vous sûr de vouloir supprimer ce projet archivé ?");
+                
+                if (!confirmed) return;
+                
+                try {
+                    const docRef = doc(db, "projects", idToDelete);
+                    await deleteDoc(docRef);
+                } catch (error) {
+                    console.error("Erreur lors de la suppression: ", error);
+                }
             }
-            try {
-                const docRef = doc(db, "projects", idToDelete);
-                await deleteDoc(docRef);
-            } catch (error) {
-                console.error("Erreur lors de la suppression: ", error);
-            }
-        }
-    });
+        });
+    }
 
     function uiForLoggedIn(user) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        userDetails.textContent = `Connecté: ${user.email}`;
-        projectStatsDiv.style.display = "flex";
+        if(loginBtn) loginBtn.style.display = "none";
+        if(logoutBtn) logoutBtn.style.display = "inline-block";
+        if(userDetails) userDetails.textContent = `Connecté: ${user.email.split('@')[0]}`;
+        if(projectStatsDiv) projectStatsDiv.style.display = "flex";
     }
 
     function uiForLoggedOut() {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        userDetails.textContent = "";
-        projectStatsDiv.style.display = "none";
+        if(loginBtn) loginBtn.style.display = "inline-block";
+        if(logoutBtn) logoutBtn.style.display = "none";
+        if(userDetails) userDetails.textContent = "";
+        if(projectStatsDiv) projectStatsDiv.style.display = "none";
     }
 });

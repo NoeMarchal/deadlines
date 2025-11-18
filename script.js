@@ -30,14 +30,16 @@ const modalInput = document.getElementById('modal-input');
 const btnOk = document.getElementById('modal-btn-ok');
 const btnCancel = document.getElementById('modal-btn-cancel');
 
-// Fonction générique pour afficher la boîte
 function showCustomModal(type, message, placeholder = "") {
     return new Promise((resolve) => {
+        if (!modalOverlay) {
+            alert(message); // Fallback si le HTML manque
+            return resolve(true);
+        }
         modalOverlay.style.display = 'flex';
         modalText.textContent = message;
         modalInput.value = "";
         
-        // Reset des affichages
         modalInput.style.display = 'none';
         btnCancel.style.display = 'none';
         btnOk.textContent = "OK";
@@ -59,14 +61,11 @@ function showCustomModal(type, message, placeholder = "") {
             btnOk.textContent = "VALIDER";
         }
 
-        // Gestion des clics (Nettoyage des anciens écouteurs via cloneNode ou flag simple)
-        // Méthode simple : on remplace les boutons pour virer les anciens listeners
         const newBtnOk = btnOk.cloneNode(true);
         const newBtnCancel = btnCancel.cloneNode(true);
         btnOk.parentNode.replaceChild(newBtnOk, btnOk);
         btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
 
-        // Nouveaux écouteurs
         newBtnOk.addEventListener('click', () => {
             modalOverlay.style.display = 'none';
             if (type === 'prompt') resolve(modalInput.value);
@@ -75,10 +74,9 @@ function showCustomModal(type, message, placeholder = "") {
 
         newBtnCancel.addEventListener('click', () => {
             modalOverlay.style.display = 'none';
-            resolve(false); // ou null pour prompt
+            resolve(false);
         });
         
-        // Touche Entrée pour valider
         if(type === 'prompt') {
              modalInput.onkeydown = (e) => {
                 if(e.key === 'Enter') newBtnOk.click();
@@ -87,7 +85,6 @@ function showCustomModal(type, message, placeholder = "") {
     });
 }
 
-// Remplaçants faciles à utiliser
 const myAlert = (msg) => showCustomModal('alert', msg);
 const myConfirm = (msg) => showCustomModal('confirm', msg);
 const myPrompt = (msg, place) => showCustomModal('prompt', msg, place);
@@ -109,17 +106,17 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
-// --- CONFIGURATION DU JEU (XP & ARGENT) ---
+// --- CONFIGURATION DU JEU ---
 const GAME_CONFIG = {
-    xpReward: 500,      // XP gagnée par projet
-    coinReward: 700,    // Argent gagné par projet (NOUVEAU)
-    levelStep: 800     // XP nécessaire par niveau
+    xpReward: 500,
+    coinReward: 700,
+    levelStep: 800
 };
 
 const PET_CONFIG = {
-    costFeed: 5,       // Coût en PIÈCES pour nourrir
-    xpGain: 50,         // XP gagné par le Pet quand on le nourrit
-    costRename: 50,     // Coût en PIÈCES pour renommer
+    costFeed: 5,
+    xpGain: 50,
+    costRename: 50,
     stages: [
         { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
         { minLvl: 3, art: "[ o_o ]", name: "Robo-Bot" },
@@ -173,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (user) {
             currentUser = user;
             uiForLoggedIn(user);
-            syncUserData(user); // Charge XP et Pièces
+            syncUserData(user);
             loadCompanion(user);
             
             if (unsubscribeFromProjects) unsubscribeFromProjects();
@@ -184,38 +181,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             pendingList.innerHTML = "<p>Veuillez vous connecter pour voir vos projets.</p>";
-            userLevelContainer.style.display = 'none';
-            companionSection.style.display = 'none';
+            if(userLevelContainer) userLevelContainer.style.display = 'none';
+            if(companionSection) companionSection.style.display = 'none';
         }
     });
 
     // --- GESTION DES PROJETS ---
-    projectForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        if (!currentUser) return;
+    if(projectForm) {
+        projectForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
 
-        const name = projectNameInput.value;
-        const start = startDateInput.value;
-        const end = endDateInput.value;
+            const name = projectNameInput.value;
+            const start = startDateInput.value;
+            const end = endDateInput.value;
 
-        if (new Date(start).getTime() >= new Date(end).getTime()) {
-            awaitalert("La date de fin doit être après la date de début !");
-            return;
-        }
+            if (new Date(start).getTime() >= new Date(end).getTime()) {
+                await myAlert("La date de fin doit être après la date de début !");
+                return;
+            }
 
-        try {
-            await addDoc(projectsCollection, {
-                name: name,
-                start: start,
-                end: end,
-                userId: currentUser.uid,
-                status: "pending",
-            });
-            projectForm.reset();
-        } catch (error) {
-            console.error(error);
-        }
-    });
+            try {
+                await addDoc(projectsCollection, {
+                    name: name,
+                    start: start,
+                    end: end,
+                    userId: currentUser.uid,
+                    status: "pending",
+                });
+                projectForm.reset();
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    }
 
     function listenToProjects(userId) {
         const q = query(
@@ -225,17 +224,10 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         return onSnapshot(q, (snapshot) => {
-            pendingList.innerHTML = "";
+            if(pendingList) pendingList.innerHTML = "";
             let pendingCount = 0;
             let completedCount = 0;
             let totalProjects = snapshot.size;
-
-            if (snapshot.empty) {
-                pendingList.innerHTML = "<p>Aucun projet pour le moment.</p>";
-                completedCountSpan.textContent = 0;
-                totalCountSpan.textContent = 0;
-                return;
-            }
 
             snapshot.forEach((doc) => {
                 const status = doc.data().status || "pending";
@@ -245,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (status === 'completed') {
                         completedCount++;
                     } else {
-                        pendingList.appendChild(projectCard);
+                        if(pendingList) pendingList.appendChild(projectCard);
                         pendingCount++;
                     }
                 } else {
@@ -253,12 +245,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            if (pendingCount === 0) {
+            if (pendingList && pendingCount === 0) {
                 pendingList.innerHTML = "<p>Aucun projet en cours.</p>";
             }
 
-            completedCountSpan.textContent = completedCount;
-            totalCountSpan.textContent = totalProjects;
+            if(completedCountSpan) completedCountSpan.textContent = completedCount;
+            if(totalCountSpan) totalCountSpan.textContent = totalProjects;
         });
     }
 
@@ -322,31 +314,36 @@ document.addEventListener("DOMContentLoaded", () => {
         return projectCard;
     }
 
-    projectsGrid.addEventListener("click", async (e) => {
-        if (e.target.classList.contains("delete-btn")) {
-            const idToDelete = e.target.getAttribute("data-id");
-            if (!confirm("Supprimer ce projet ?")) return;
-            try {
-                await deleteDoc(doc(db, "projects", idToDelete));
-            } catch (error) { console.error(error); }
-        }
+    if(projectsGrid) {
+        projectsGrid.addEventListener("click", async (e) => {
+            if (e.target.classList.contains("delete-btn")) {
+                const idToDelete = e.target.getAttribute("data-id");
+                // CORRECTION ICI : Utilisation de myConfirm
+                const confirmed = await myConfirm("Supprimer ce projet ?");
+                if (!confirmed) return;
+                
+                try {
+                    await deleteDoc(doc(db, "projects", idToDelete));
+                } catch (error) { console.error(error); }
+            }
 
-        if (e.target.classList.contains('complete-btn')) {
-            const idToComplete = e.target.getAttribute('data-id');
-            
-            try {
-                await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
-                if (currentUser) {
-                    // On donne l'XP ET les Pièces
-                    updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
-                }
-            } catch (error) { console.error(error); }
-        }
-    });
+            if (e.target.classList.contains('complete-btn')) {
+                const idToComplete = e.target.getAttribute('data-id');
+                
+                try {
+                    await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
+                    if (currentUser) {
+                        updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
+                    }
+                } catch (error) { console.error(error); }
+            }
+        });
+    }
 
     // --- GESTION COMPAGNON (PET) ---
 
     async function loadCompanion(user) {
+        if(!companionSection) return;
         companionSection.style.display = 'block';
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
@@ -379,12 +376,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         petVisual.textContent = currentStage.art;
         
-        // Met à jour les textes des boutons avec les prix en pièces
         if(feedBtn) feedBtn.innerText = `⚡ Nourrir (${PET_CONFIG.costFeed} ₵)`;
         if(renameBtn) renameBtn.innerText = `✎ Nom (${PET_CONFIG.costRename} ₵)`;
     }
 
-    // BOUTON NOURRIR
     if (feedBtn) {
         feedBtn.addEventListener('click', async () => {
             if (!currentUser) return;
@@ -392,20 +387,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const userRef = doc(db, "users", currentUser.uid);
             const snap = await getDoc(userRef);
             const data = snap.data();
-            
-            // On récupère les pièces (Coins)
             const userCoins = data.coins || 0;
             
-            // VÉRIFICATION DES PIÈCES (PAS XP)
             if (userCoins < PET_CONFIG.costFeed) {
-                petMessage.textContent = "⚠️ Pas assez de crédits !";
-                petMessage.style.color = "red";
-                setTimeout(() => petMessage.textContent = "En attente...", 2000);
+                // CORRECTION ICI : myAlert
+                await myAlert("⚠️ Pas assez de crédits !");
                 return;
             }
 
             let pet = data.companion;
-            let newUserCoins = userCoins - PET_CONFIG.costFeed; // On déduit les pièces
+            let newUserCoins = userCoins - PET_CONFIG.costFeed;
             
             pet.currentXp += PET_CONFIG.xpGain;
             
@@ -420,7 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 petMessage.style.color = "#aaa";
             }
 
-            // Sauvegarde (On touche aux coins, pas à l'XP user)
             await updateDoc(userRef, {
                 coins: newUserCoins, 
                 companion: pet
@@ -432,22 +422,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // BOUTON RENOMMER
     if (renameBtn) {
         renameBtn.addEventListener('click', async () => {
             if (!currentUser) return;
 
-            const newName = prompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`);
+            // CORRECTION ICI : myPrompt
+            const newName = await myPrompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`, "Ex: Glitch 2.0");
             if (!newName || newName.trim() === "") return;
 
             const userRef = doc(db, "users", currentUser.uid);
             const snap = await getDoc(userRef);
             const data = snap.data();
-            
             const userCoins = data.coins || 0;
 
             if (userCoins < PET_CONFIG.costRename) {
-                awaitalert("Crédits insuffisants.");
+                await myAlert("Crédits insuffisants.");
                 return;
             }
 
@@ -465,27 +454,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- GESTION GLOBALE (XP + COINS) ---
-
     function uiForLoggedIn(user) {
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
         userDetails.textContent = `Opérateur: ${user.email.split('@')[0]}`;
-        projectForm.style.display = "grid";
+        if(projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
-        projectStatsDiv.style.display = "flex";
+        if(projectStatsDiv) projectStatsDiv.style.display = "flex";
     }
 
     function uiForLoggedOut() {
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
         userDetails.textContent = "";
-        projectForm.style.display = "none";
+        if(projectForm) projectForm.style.display = "none";
         if (addProjectBtn) addProjectBtn.disabled = true;
-        projectStatsDiv.style.display = "none";
+        if(projectStatsDiv) projectStatsDiv.style.display = "none";
     }
 
-    // Nouvelle fonction unifiée pour gagner XP et Pièces
     async function updateUserStats(user, xpGained = 0, coinsGained = 0) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
@@ -513,7 +499,8 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTopBarUI(newXP, newLevel, newCoins);
         
         if (xpGained > 0 || coinsGained > 0) {
-            awaitalert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
+            // CORRECTION ICI : myAlert
+            await myAlert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
         }
     }
 
@@ -523,20 +510,19 @@ document.addEventListener("DOMContentLoaded", () => {
         
         if (userSnap.exists()) {
             const data = userSnap.data();
-            // Si 'coins' n'existe pas encore (ancien user), on met 0
             const coins = data.coins || 0;
             updateTopBarUI(data.xp || 0, data.level || 1, coins);
         } else {
-            // Initialisation nouveau user
             updateTopBarUI(0, 1, 0);
         }
     }
 
     function updateTopBarUI(xp, level, coins) {
+        if(!userLevelContainer) return;
         const levelBadge = document.getElementById('level-badge');
         const xpBarFill = document.getElementById('xp-bar-fill');
         const xpText = document.getElementById('xp-text');
-        const coinsDisplay = document.getElementById('user-coins'); // L'élément ajouté au HTML
+        const coinsDisplay = document.getElementById('user-coins');
         
         userLevelContainer.style.display = 'flex';
         levelBadge.textContent = `LVL ${level}`;
@@ -547,7 +533,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const progress = (currentLevelXp) / GAME_CONFIG.levelStep * 100;
         xpBarFill.style.width = `${progress}%`;
 
-        // Mise à jour des pièces
         if(coinsDisplay) {
             coinsDisplay.textContent = `${coins} ₵`;
         }
