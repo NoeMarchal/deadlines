@@ -250,7 +250,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentUser = null;
     let unsubscribeFromProjects = null;
+    // --- GESTION DU GUIDE / AIDE ---
+    const helpBtn = document.getElementById('help-btn');
+    const helpOverlay = document.getElementById('help-modal-overlay');
+    const closeHelpBtn = document.getElementById('close-help-btn');
 
+    if (helpBtn && helpOverlay && closeHelpBtn) {
+        // Ouvrir
+        helpBtn.addEventListener('click', () => {
+            helpOverlay.style.display = 'flex';
+        });
+
+        // Fermer (Bouton)
+        closeHelpBtn.addEventListener('click', () => {
+            helpOverlay.style.display = 'none';
+        });
+
+        // Fermer (Clic en dehors de la boîte)
+        helpOverlay.addEventListener('click', (e) => {
+            if (e.target === helpOverlay) {
+                helpOverlay.style.display = 'none';
+            }
+        });
+    }
     // --- CONFIGURATION API KEY ---
     if(apiConfigBtn) {
         apiConfigBtn.addEventListener('click', async () => {

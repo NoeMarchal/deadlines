@@ -39,7 +39,7 @@
         <div id="auth-right">
             <span id="user-details"></span>
             <button id="api-config-btn" title="Configurer Clé IA">⚙️ API</button>
-            
+            <button id="help-btn" title="Manuel d'utilisation">❓ AIDE</button>
             <button id="signup-btn">Créer un compte</button>
             <button id="login-btn">Se connecter</button>
             <button id="logout-btn" style="display: none;">Se déconnecter</button>
@@ -150,5 +150,37 @@
             </div>
         </div>
     </div>
+    <div id="help-modal-overlay" style="display: none;">
+    <div id="help-modal-box">
+        <h2 style="color: #FFFF00; border-bottom: 1px solid #333; padding-bottom: 10px;">MANUEL DU JOUEUR</h2>
+        
+        <div class="help-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+            <h3 style="color: #00ff00;">1. 🎯 Projets & XP</h3>
+            <p>Créez des projets avec une deadline.
+            <br>- <strong>En cours :</strong> La barre de progression avance avec le temps.
+            <br>- <strong>Urgent :</strong> Devient ROUGE s'il reste moins de 3 jours.
+            <br>- <strong>Terminé :</strong> Cliquez sur "Terminer" pour gagner de l'XP et des Crédits (₵).</p>
+
+            <h3 style="color: #00ff00;">2. 🤖 Compagnon (Pet)</h3>
+            <p>Votre compagnon évolue selon votre niveau.
+            <br>- <strong>Nourrir :</strong> Coûte 5₵, donne de l'XP au pet.
+            <br>- <strong>Évolution :</strong> Le visuel change aux niveaux 3, 5, 8 et 12.</p>
+
+            <h3 style="color: #00ff00;">3. 🧠 IA & PDF (Gemini)</h3>
+            <p>Générez une checklist automatique pour vos projets :
+            <br>1. Configurez votre clé API (Bouton ⚙️ API).
+            <br>2. Cliquez sur <strong>"📄 IA TASKS"</strong> sur un projet.
+            <br>3. Sélectionnez un fichier PDF (cours, brief, etc.).
+            <br>4. L'IA analyse et crée la liste des tâches.</p>
+
+            <h3 style="color: #00ff00;">4. 🍅 Pomodoro</h3>
+            <p>Utilisez le timer (25min) pour rester focus. Le titre de l'onglet change pour afficher le temps restant.</p>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button id="close-help-btn" class="pet-btn">COMPRIS</button>
+        </div>
+    </div>
+</div>
   </body> 
 </html>
