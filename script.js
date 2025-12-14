@@ -22,144 +22,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
 
-const modalOverlay = document.getElementById('custom-modal-overlay');
-const modalTitle = document.getElementById('modal-title');
-const modalText = document.getElementById('modal-text');
-const modalInput = document.getElementById('modal-input');
-const signupBtn = document.getElementById("signup-btn");
-const apiConfigBtn = document.getElementById("api-config-btn");
-// --- GESTION DES RÉGLAGES & THÈMES ---
-    const settingsBtn = document.getElementById('settings-btn');
-    const settingsOverlay = document.getElementById('settings-overlay');
-    const closeSettingsBtn = document.getElementById('close-settings-btn');
-    const themeSelector = document.getElementById('theme-selector');
-    const settingsApiKeyInput = document.getElementById('settings-api-key');
-    const saveApiBtn = document.getElementById('save-api-btn');
-    const logoutBtnSettings = document.getElementById('logout-btn-settings'); // Nouveau bouton logout
-
-    // 1. Charger le thème sauvegardé
-    const currentTheme = localStorage.getItem('site_theme') || 'theme-retro';
-    document.body.className = currentTheme;
-    if(themeSelector) themeSelector.value = currentTheme;
-
-    // 2. Ouvrir les réglages
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', () => {
-            settingsOverlay.style.display = 'flex';
-            // Pré-remplir la clé API si elle existe (sauf si c'est la clé "cadeau")
-            const key = localStorage.getItem('GEMINI_API_KEY');
-            if(key) settingsApiKeyInput.value = key;
-        });
-    }
-
-    // 3. Fermer les réglages
-    if (closeSettingsBtn) {
-        closeSettingsBtn.addEventListener('click', () => {
-            settingsOverlay.style.display = 'none';
-        });
-    }
-
-    // 4. Changer de Thème
-    if (themeSelector) {
-        themeSelector.addEventListener('change', (e) => {
-            const newTheme = e.target.value;
-            // Applique la classe au Body (ce qui active les variables CSS)
-            document.body.className = newTheme;
-            // Sauvegarde le choix
-            localStorage.setItem('site_theme', newTheme);
-        });
-    }
-
-    // 5. Sauvegarder la Clé API depuis les réglages
-    if (saveApiBtn) {
-        saveApiBtn.addEventListener('click', () => {
-            const newKey = settingsApiKeyInput.value.trim();
-            if (newKey) {
-                setGeminiKey(newKey);
-                alert("Clé API enregistrée !");
-            }
-        });
-    }
-
-    // 6. Gestion du Logout (Déplacé ici)
-    if (logoutBtnSettings) {
-        logoutBtnSettings.addEventListener('click', () => {
-            signOut(auth).catch((error) => console.error(error));
-            settingsOverlay.style.display = 'none'; // Fermer le menu
-        });
-    }
-// --- FONCTIONS MODALES CORRIGÉES ---
-// Cette version recharge les boutons à chaque appel pour éviter le crash "parentNode is null"
-function showCustomModal(type, message, placeholder = "") {
-    return new Promise((resolve) => {
-        if (!modalOverlay) {
-            alert(message); // Fallback si le HTML manque
-            return resolve(true);
-        }
-        
-        // 1. On récupère les boutons ACTUELS du DOM (très important !)
-        const currentBtnOk = document.getElementById('modal-btn-ok');
-        const currentBtnCancel = document.getElementById('modal-btn-cancel');
-
-        // 2. Configuration de l'affichage
-        modalOverlay.style.display = 'flex';
-        modalText.textContent = message;
-        modalInput.value = "";
-        
-        modalInput.style.display = 'none';
-        currentBtnCancel.style.display = 'none';
-        currentBtnOk.textContent = "OK";
-
-        if (type === 'alert') {
-            modalTitle.textContent = "MESSAGE SYSTÈME";
-        } 
-        else if (type === 'confirm') {
-            modalTitle.textContent = "CONFIRMATION REQUISE";
-            currentBtnCancel.style.display = 'block';
-            currentBtnOk.textContent = "OUI";
-        } 
-        else if (type === 'prompt') {
-            modalTitle.textContent = "SAISIE REQUISE";
-            modalInput.style.display = 'block';
-            modalInput.placeholder = placeholder;
-            modalInput.focus();
-            currentBtnCancel.style.display = 'block';
-            currentBtnOk.textContent = "VALIDER";
-        }
-
-        // 3. Clonage pour supprimer les anciens écouteurs (clean start)
-        const newBtnOk = currentBtnOk.cloneNode(true);
-        const newBtnCancel = currentBtnCancel.cloneNode(true);
-        
-        // 4. Remplacement sécurisé dans le DOM
-        currentBtnOk.parentNode.replaceChild(newBtnOk, currentBtnOk);
-        currentBtnCancel.parentNode.replaceChild(newBtnCancel, currentBtnCancel);
-
-        // 5. Ajout des nouveaux écouteurs
-        newBtnOk.addEventListener('click', () => {
-            modalOverlay.style.display = 'none';
-            if (type === 'prompt') resolve(modalInput.value);
-            else resolve(true);
-        });
-
-        newBtnCancel.addEventListener('click', () => {
-            modalOverlay.style.display = 'none';
-            resolve(false);
-        });
-        
-        // Gestion de la touche Entrée pour le prompt
-        if(type === 'prompt') {
-             modalInput.onkeydown = (e) => {
-                if(e.key === 'Enter') newBtnOk.click();
-             };
-        }
-    });
-}
-
-const myAlert = (msg) => showCustomModal('alert', msg);
-const myConfirm = (msg) => showCustomModal('confirm', msg);
-const myPrompt = (msg, place) => showCustomModal('prompt', msg, place);
-
 // --- CONFIGURATION FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg",
@@ -177,6 +39,7 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
+// --- CONFIGURATION DU JEU ---
 const GAME_CONFIG = {
     xpReward: 500,
     coinReward: 700,
@@ -196,38 +59,98 @@ const PET_CONFIG = {
     ]
 };
 
-// --- LOGIQUE IA (GEMINI) ---
-let targetProjectIdForAI = null;
-const pdfInput = document.getElementById('pdf-upload-input');
+// --- SYSTÈME DE MODALES ---
+const modalOverlay = document.getElementById('custom-modal-overlay');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const modalInput = document.getElementById('modal-input');
 
-// Sauvegarder / Récupérer la clé API
-// --- GESTION INTELLIGENTE DE LA CLÉ ---
+function showCustomModal(type, message, placeholder = "") {
+    return new Promise((resolve) => {
+        if (!modalOverlay) {
+            alert(message); 
+            return resolve(true);
+        }
+        
+        const currentBtnOk = document.getElementById('modal-btn-ok');
+        const currentBtnCancel = document.getElementById('modal-btn-cancel');
+
+        modalOverlay.style.display = 'flex';
+        modalText.textContent = message;
+        modalInput.value = "";
+        modalInput.style.display = 'none';
+        currentBtnCancel.style.display = 'none';
+        currentBtnOk.textContent = "OK";
+
+        if (type === 'alert') {
+            modalTitle.textContent = "MESSAGE SYSTÈME";
+        } else if (type === 'confirm') {
+            modalTitle.textContent = "CONFIRMATION REQUISE";
+            currentBtnCancel.style.display = 'block';
+            currentBtnOk.textContent = "OUI";
+        } else if (type === 'prompt') {
+            modalTitle.textContent = "SAISIE REQUISE";
+            modalInput.style.display = 'block';
+            modalInput.placeholder = placeholder;
+            modalInput.focus();
+            currentBtnCancel.style.display = 'block';
+            currentBtnOk.textContent = "VALIDER";
+        }
+
+        const newBtnOk = currentBtnOk.cloneNode(true);
+        const newBtnCancel = currentBtnCancel.cloneNode(true);
+        
+        currentBtnOk.parentNode.replaceChild(newBtnOk, currentBtnOk);
+        currentBtnCancel.parentNode.replaceChild(newBtnCancel, currentBtnCancel);
+
+        newBtnOk.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            if (type === 'prompt') resolve(modalInput.value);
+            else resolve(true);
+        });
+
+        newBtnCancel.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            resolve(false);
+        });
+        
+        if(type === 'prompt') {
+             modalInput.onkeydown = (e) => {
+                if(e.key === 'Enter') newBtnOk.click();
+             };
+        }
+    });
+}
+
+const myAlert = (msg) => showCustomModal('alert', msg);
+const myConfirm = (msg) => showCustomModal('confirm', msg);
+const myPrompt = (msg, place) => showCustomModal('prompt', msg, place);
+
+
+// --- LOGIQUE IA (GEMINI) & SPONSORING ---
+let targetProjectIdForAI = null;
 
 function getGeminiKey() {
-    // 1. On regarde si l'utilisateur a rentré sa PROPRE clé (mode expert)
+    // 1. Priorité : Clé personnelle de l'utilisateur
     const userKey = localStorage.getItem('GEMINI_API_KEY');
-    
     if (userKey) {
         return userKey; 
     } else {
-        // 2. Sinon, on utilise ta clé "CADEAU" par défaut (Sponsoring)
-        // C'est ici que tu mets TA clé qui fonctionne (celle en gemini-2.5-flash)
+        // 2. Fallback : Clé "Cadeau" (Sponsoring)
+        // REMPLACE CECI PAR TA VRAIE CLÉ VALIDE (Celle qui supporte gemini-2.5-flash)
         return "AIzaSyAr3pws_6yXgjp4PL8UOTyf-NAFo1yyhQk"; 
     }
 }
 
 function setGeminiKey(key) {
-    // Si l'utilisateur veut mettre sa propre clé plus tard
     localStorage.setItem('GEMINI_API_KEY', key);
 }
 
-// Extraction du texte depuis PDF (via pdf.js)
+// Extraction du texte depuis PDF
 async function extractTextFromPDF(file) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
     let fullText = "";
-    
-    // Lire max 5 premières pages pour ne pas exploser les tokens
     const maxPages = Math.min(pdf.numPages, 5);
     
     for (let i = 1; i <= maxPages; i++) {
@@ -244,7 +167,7 @@ async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
 
-    // CORRECTION MAJEURE ICI : Utilisation de la version '002' stable
+    // MODÈLE STABLE & RÉCENT
     const modelName = "gemini-2.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     
@@ -256,24 +179,21 @@ async function generateTasksFromText(text) {
         RÈGLES STRICTES DE RÉPONSE :
         1. Réponds UNIQUEMENT avec la liste des tâches.
         2. Une tâche par ligne.
-        3. Pas de numéros, pas de tirets au début, juste le texte de la tâche.
-        4. Pas de phrase d'introduction comme "Voici la liste...".
+        3. Pas de numéros, pas de tirets au début.
+        4. Pas de phrase d'introduction.
         
-        CONSIGNES DU PROJET : 
+        CONSIGNES : 
         ${text.substring(0, 8000)}
     `;
 
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-        })
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
     const data = await response.json();
     
-    // Gestion d'erreur détaillée
     if (data.error) {
         console.error("Erreur API Gemini:", data.error);
         throw new Error(`Erreur IA (${data.error.code}): ${data.error.message}`);
@@ -284,31 +204,15 @@ async function generateTasksFromText(text) {
     }
 
     const rawText = data.candidates[0].content.parts[0].text;
-    
-    // Nettoyage de la réponse
     return rawText.split('\n')
-        .map(line => line.replace(/^[\*\-\d\.]+\s*/, '').trim()) // Enlever puces/numéros
-        .filter(line => line.length > 2); // Garder lignes non vides
+        .map(line => line.replace(/^[\*\-\d\.]+\s*/, '').trim())
+        .filter(line => line.length > 2);
 }
 
 
-// --- DOM ELEMENTS ---
-const projectStatsDiv = document.getElementById("project-stats");
-const completedCountSpan = document.getElementById("completed-count");
-const totalCountSpan = document.getElementById("total-count");
-const userLevelContainer = document.getElementById('user-level-container');
-
-// DOM Elements Compagnon
-const companionSection = document.getElementById('companion-section');
-const petNameDisplay = document.getElementById('pet-name-display');
-const petLevelDisplay = document.getElementById('pet-level-display');
-const petVisual = document.getElementById('pet-visual');
-const petXpBar = document.getElementById('pet-xp-bar-inner');
-const petMessage = document.getElementById('pet-message');
-const feedBtn = document.getElementById('feed-btn');
-const renameBtn = document.getElementById('rename-btn');
-
+// --- MAIN LOGIC ---
 document.addEventListener("DOMContentLoaded", () => {
+    // Éléments principaux
     const projectForm = document.getElementById("project-form");
     const pendingList = document.getElementById("pending-projects-list");
     const projectsGrid = document.getElementById("projects-container");
@@ -316,110 +220,144 @@ document.addEventListener("DOMContentLoaded", () => {
     const startDateInput = document.getElementById("start-date");
     const endDateInput = document.getElementById("end-date");
     const addProjectBtn = document.getElementById("add-project-btn");
+    
+    // Auth & Navigation
     const loginBtn = document.getElementById("login-btn");
-    const logoutBtn = document.getElementById("logout-btn");
+    const signupBtn = document.getElementById("signup-btn");
     const userDetails = document.getElementById("user-details");
+    
+    // Stats & UI
+    const projectStatsDiv = document.getElementById("project-stats");
+    const completedCountSpan = document.getElementById("completed-count");
+    const totalCountSpan = document.getElementById("total-count");
+    const userLevelContainer = document.getElementById('user-level-container');
+    
+    // Compagnon
+    const companionSection = document.getElementById('companion-section');
+    const petNameDisplay = document.getElementById('pet-name-display');
+    const petLevelDisplay = document.getElementById('pet-level-display');
+    const petVisual = document.getElementById('pet-visual');
+    const petXpBar = document.getElementById('pet-xp-bar-inner');
+    const petMessage = document.getElementById('pet-message');
+    const feedBtn = document.getElementById('feed-btn');
+    const renameBtn = document.getElementById('rename-btn');
+    
+    // IA
+    const pdfInput = document.getElementById('pdf-upload-input');
 
-    let currentUser = null;
-    let unsubscribeFromProjects = null;
-    // --- GESTION DU GUIDE / AIDE ---
+    // Réglages & Thèmes
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+    const themeSelector = document.getElementById('theme-selector');
+    const settingsApiKeyInput = document.getElementById('settings-api-key');
+    const saveApiBtn = document.getElementById('save-api-btn');
+    const logoutBtnSettings = document.getElementById('logout-btn-settings');
+    
+    // Aide
     const helpBtn = document.getElementById('help-btn');
     const helpOverlay = document.getElementById('help-modal-overlay');
     const closeHelpBtn = document.getElementById('close-help-btn');
 
-    if (helpBtn && helpOverlay && closeHelpBtn) {
-        // Ouvrir
-        helpBtn.addEventListener('click', () => {
-            helpOverlay.style.display = 'flex';
-        });
+    let currentUser = null;
+    let unsubscribeFromProjects = null;
 
-        // Fermer (Bouton)
-        closeHelpBtn.addEventListener('click', () => {
-            helpOverlay.style.display = 'none';
-        });
+    // --- 1. INITIALISATION THÈME ---
+    const currentTheme = localStorage.getItem('site_theme') || 'theme-retro';
+    document.body.className = currentTheme;
+    if(themeSelector) themeSelector.value = currentTheme;
 
-        // Fermer (Clic en dehors de la boîte)
-        helpOverlay.addEventListener('click', (e) => {
-            if (e.target === helpOverlay) {
-                helpOverlay.style.display = 'none';
-            }
+    // --- 2. LISTENERS RÉGLAGES ---
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            settingsOverlay.style.display = 'flex';
+            const key = localStorage.getItem('GEMINI_API_KEY');
+            if(key) settingsApiKeyInput.value = key;
         });
     }
-    // --- CONFIGURATION API KEY ---
-    if(apiConfigBtn) {
-        apiConfigBtn.addEventListener('click', async () => {
-            const currentKey = getGeminiKey() || "";
-            const newKey = await myPrompt("Clé Google Gemini API :", currentKey);
-            if (newKey !== false) { // Si pas annulé
+
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsOverlay.style.display = 'none';
+        });
+    }
+
+    if (themeSelector) {
+        themeSelector.addEventListener('change', (e) => {
+            const newTheme = e.target.value;
+            document.body.className = newTheme;
+            localStorage.setItem('site_theme', newTheme);
+        });
+    }
+
+    if (saveApiBtn) {
+        saveApiBtn.addEventListener('click', () => {
+            const newKey = settingsApiKeyInput.value.trim();
+            if (newKey) {
                 setGeminiKey(newKey);
-                await myAlert("Clé enregistrée !");
+                alert("Clé API enregistrée !");
             }
         });
     }
 
-    // --- GESTION UPLOAD PDF POUR IA ---
+    if (logoutBtnSettings) {
+        logoutBtnSettings.addEventListener('click', () => {
+            signOut(auth).catch((error) => console.error(error));
+            settingsOverlay.style.display = 'none';
+        });
+    }
+
+    // --- 3. LISTENERS AIDE ---
+    if (helpBtn && helpOverlay && closeHelpBtn) {
+        helpBtn.addEventListener('click', () => { helpOverlay.style.display = 'flex'; });
+        closeHelpBtn.addEventListener('click', () => { helpOverlay.style.display = 'none'; });
+        helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) helpOverlay.style.display = 'none'; });
+    }
+
+    // --- 4. GESTION UPLOAD PDF POUR IA ---
     if (pdfInput) {
         pdfInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            e.target.value = ''; // Reset pour permettre de réuploader le même fichier
+            e.target.value = ''; 
             
             if (!file || !targetProjectIdForAI) return;
 
             try {
                 await myAlert("Analyse du document en cours...");
-                
-                // 1. Lire le PDF
                 const text = await extractTextFromPDF(file);
-                
-                // 2. Appeler Gemini
                 const tasks = await generateTasksFromText(text);
                 
-                // 3. Formater pour Firebase
                 const tasksObjects = tasks.map((t, index) => ({
                     id: Date.now() + index,
                     desc: t,
                     done: false
                 }));
 
-                // 4. Sauvegarder dans le projet
                 const projectRef = doc(db, "projects", targetProjectIdForAI);
-                
-                // On récupère d'abord pour ne pas écraser les tâches existantes si on veut cumuler (optionnel, ici on remplace ou ajoute)
-                // Ici on remplace la liste 'aiTasks' par la nouvelle
                 await updateDoc(projectRef, { aiTasks: tasksObjects });
                 
-                await myAlert(`Terminé ! ${tasks.length} tâches ont été ajoutées au projet.`);
+                await myAlert(`Terminé ! ${tasks.length} tâches ajoutées.`);
 
             } catch (error) {
                 console.error(error);
                 if(error.message.includes("404") || error.message.includes("not found")) {
-                    await myAlert("Erreur Modèle IA : Le modèle semble indisponible. Vérifiez votre clé API.");
+                    await myAlert("Erreur Modèle IA : Modèle introuvable. Vérifiez la clé API.");
                 } else if(error.message.includes("API")) {
                      await myAlert("Erreur API : " + error.message);
-} else {
-    // Affiche le vrai message technique pour comprendre
-    await myAlert("Erreur technique : " + error.message);
-}
+                } else {
+                    await myAlert("Erreur technique : " + error.message);
+                }
             } finally {
                 targetProjectIdForAI = null;
             }
         });
     }
 
-    // --- AUTHENTIFICATION ---
-    loginBtn.addEventListener("click", () => {
-        signInWithPopup(auth, provider).catch((error) => console.error(error));
-    });
-
-    logoutBtn.addEventListener("click", () => {
-        signOut(auth).catch((error) => console.error(error));
-    });
-
-    if(signupBtn) {
-        signupBtn.addEventListener("click", () => {
-            signInWithPopup(auth, provider).catch((error) => console.error(error));
-        });
-    }
+    // --- 5. AUTHENTIFICATION ---
+    if(loginBtn) loginBtn.addEventListener("click", () => signInWithPopup(auth, provider));
+    if(signupBtn) signupBtn.addEventListener("click", () => signInWithPopup(auth, provider));
+    
+    // Note: Le logout principal est maintenant géré dans les réglages (logoutBtnSettings)
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -435,13 +373,13 @@ document.addEventListener("DOMContentLoaded", () => {
             uiForLoggedOut();
 
             if (unsubscribeFromProjects) unsubscribeFromProjects();
-            pendingList.innerHTML = "<p>Veuillez vous connecter pour voir vos projets.</p>";
+            if(pendingList) pendingList.innerHTML = "<p>Veuillez vous connecter pour voir vos projets.</p>";
             if(userLevelContainer) userLevelContainer.style.display = 'none';
             if(companionSection) companionSection.style.display = 'none';
         }
     });
 
-    // --- GESTION DES PROJETS ---
+    // --- 6. GESTION PROJETS ---
     if(projectForm) {
         projectForm.addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -466,19 +404,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     aiTasks: [] 
                 });
                 projectForm.reset();
-            } catch (error) {
-                console.error(error);
-            }
+            } catch (error) { console.error(error); }
         });
     }
 
     function listenToProjects(userId) {
-        const q = query(
-            projectsCollection,
-            where("userId", "==", userId),
-            orderBy("end", "asc")
-        );
-
+        const q = query(projectsCollection, where("userId", "==", userId), orderBy("end", "asc"));
         return onSnapshot(q, (snapshot) => {
             if(pendingList) pendingList.innerHTML = "";
             let pendingCount = 0;
@@ -490,9 +421,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const projectCard = renderProject(doc);
 
                 if (projectCard) {
-                    if (status === 'completed') {
-                        completedCount++;
-                    } else {
+                    if (status === 'completed') completedCount++;
+                    else {
                         if(pendingList) pendingList.appendChild(projectCard);
                         pendingCount++;
                     }
@@ -501,10 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            if (pendingList && pendingCount === 0) {
-                pendingList.innerHTML = "<p>Aucun projet en cours.</p>";
-            }
-
+            if (pendingList && pendingCount === 0) pendingList.innerHTML = "<p>Aucun projet en cours.</p>";
             if(completedCountSpan) completedCountSpan.textContent = completedCount;
             if(totalCountSpan) totalCountSpan.textContent = totalProjects;
         });
@@ -528,8 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const elapsedDuration = today - startDate;
             if (today < startDate) percentage = 0;
             else if (today > endDate) percentage = 100;
-            else if (totalDuration > 0)
-                percentage = (elapsedDuration / totalDuration) * 100;
+            else if (totalDuration > 0) percentage = (elapsedDuration / totalDuration) * 100;
             percentage = Math.round(Math.max(0, Math.min(percentage, 100)));
         }
 
@@ -542,23 +468,20 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isUrgent) projectCard.classList.add("is-urgent");
         if (status === "completed") projectCard.classList.add("is-completed");
 
-        // Bouton IA
         const aiButtonHTML = status === "pending" 
-            ? `<button class="ai-task-btn" data-id="${projectId}">📄 IA Tasks</button>` 
-            : '';
+            ? `<button class="ai-task-btn" data-id="${projectId}">📄 IA Tasks</button>` : '';
 
         const projectActionsHTML = `
              <div class="project-actions">
                  ${aiButtonHTML}
                  ${status === "pending"
-                ? `<button class="complete-btn" data-id="${projectId}">Terminer</button>`
-                : '<span class="project-completed-text">TERMINÉ</span>'
-            }
+                    ? `<button class="complete-btn" data-id="${projectId}">Terminer</button>`
+                    : '<span class="project-completed-text">TERMINÉ</span>'
+                 }
                  <button class="delete-btn" data-id="${projectId}">Supprimer</button>
              </div>
          `;
          
-        // Construction de la Checklist IA
         let tasksHTML = '';
         if (aiTasks.length > 0) {
             const tasksList = aiTasks.map(t => `
@@ -567,13 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span>${t.desc}</span>
                 </div>
             `).join('');
-            
-            tasksHTML = `
-                <div class="ai-tasks-container">
-                    <span class="ai-tasks-title">Checklist IA :</span>
-                    ${tasksList}
-                </div>
-            `;
+            tasksHTML = `<div class="ai-tasks-container"><span class="ai-tasks-title">Checklist IA :</span>${tasksList}</div>`;
         }
 
         const progressInnerClass = status === "completed" ? "is-completed" : "";
@@ -598,61 +515,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if(projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
-            // Suppression
             if (e.target.classList.contains("delete-btn")) {
                 const idToDelete = e.target.getAttribute("data-id");
-                const confirmed = await myConfirm("Supprimer ce projet ?");
-                if (!confirmed) return;
-                try {
-                    await deleteDoc(doc(db, "projects", idToDelete));
-                } catch (error) { console.error(error); }
+                if (await myConfirm("Supprimer ce projet ?")) {
+                    try { await deleteDoc(doc(db, "projects", idToDelete)); } catch (err) { console.error(err); }
+                }
             }
-
-            // Terminer
             if (e.target.classList.contains('complete-btn')) {
                 const idToComplete = e.target.getAttribute('data-id');
                 try {
                     await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
-                    if (currentUser) {
-                        updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
-                    }
-                } catch (error) { console.error(error); }
+                    if (currentUser) updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
+                } catch (err) { console.error(err); }
             }
-            
-            // Upload PDF pour IA
             if (e.target.classList.contains('ai-task-btn')) {
-                const pid = e.target.getAttribute('data-id');
-                // Vérifier si la clé est là
-                if (!getGeminiKey()) {
-                    await myAlert("Veuillez d'abord configurer votre clé API (Bouton ⚙️ API en haut).");
-                    return;
-                }
-                targetProjectIdForAI = pid;
-                if(pdfInput) pdfInput.click(); // Ouvrir sélecteur de fichier
+                targetProjectIdForAI = e.target.getAttribute('data-id');
+                if(pdfInput) pdfInput.click();
             }
-            
-            // Checkbox Task
             if (e.target.classList.contains('task-checkbox')) {
                 const pid = e.target.getAttribute('data-pid');
                 const tid = parseFloat(e.target.getAttribute('data-tid'));
                 const isChecked = e.target.checked;
-                
-                // Mettre à jour Firebase
                 const projectRef = doc(db, "projects", pid);
                 const projectSnap = await getDoc(projectRef);
                 if (projectSnap.exists()) {
                     let tasks = projectSnap.data().aiTasks || [];
-                    tasks = tasks.map(t => {
-                        if (t.id === tid) t.done = isChecked;
-                        return t;
-                    });
+                    tasks = tasks.map(t => { if (t.id === tid) t.done = isChecked; return t; });
                     await updateDoc(projectRef, { aiTasks: tasks });
                 }
             }
         });
     }
 
-    // --- GESTION COMPAGNON (PET) ---
+    // --- 7. GESTION PET ---
     async function loadCompanion(user) {
         if(!companionSection) return;
         companionSection.style.display = 'block';
@@ -661,12 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let data = snap.data();
         
         if (!data || !data.companion) {
-            const initialCompanion = {
-                name: "Glitch",
-                level: 1,
-                currentXp: 0,
-                maxXp: 100
-            };
+            const initialCompanion = { name: "Glitch", level: 1, currentXp: 0, maxXp: 100 };
             await setDoc(userRef, { companion: initialCompanion }, { merge: true });
             data = (await getDoc(userRef)).data(); 
         }
@@ -677,16 +567,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!pet) return;
         petNameDisplay.textContent = pet.name;
         petLevelDisplay.textContent = `NIV ${pet.level}`;
-        
         const percent = Math.min((pet.currentXp / pet.maxXp) * 100, 100);
         petXpBar.style.width = `${percent}%`;
-
         let currentStage = PET_CONFIG.stages[0];
-        for (let stage of PET_CONFIG.stages) {
-            if (pet.level >= stage.minLvl) currentStage = stage;
-        }
+        for (let stage of PET_CONFIG.stages) { if (pet.level >= stage.minLvl) currentStage = stage; }
         petVisual.textContent = currentStage.art;
-        
         if(feedBtn) feedBtn.innerText = `⚡ Nourrir (${PET_CONFIG.costFeed} ₵)`;
         if(renameBtn) renameBtn.innerText = `✎ Nom (${PET_CONFIG.costRename} ₵)`;
     }
@@ -694,21 +579,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (feedBtn) {
         feedBtn.addEventListener('click', async () => {
             if (!currentUser) return;
-            
             const userRef = doc(db, "users", currentUser.uid);
             const snap = await getDoc(userRef);
             const data = snap.data();
             const userCoins = data.coins || 0;
-            
-            if (userCoins < PET_CONFIG.costFeed) {
-                // CORRECTION ICI : myAlert
-                await myAlert("⚠️ Pas assez de crédits !");
-                return;
-            }
+            if (userCoins < PET_CONFIG.costFeed) { await myAlert("⚠️ Pas assez de crédits !"); return; }
 
             let pet = data.companion;
             let newUserCoins = userCoins - PET_CONFIG.costFeed;
-            
             pet.currentXp += PET_CONFIG.xpGain;
             
             if (pet.currentXp >= pet.maxXp) {
@@ -722,11 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 petMessage.style.color = "#aaa";
             }
 
-            await updateDoc(userRef, {
-                coins: newUserCoins, 
-                companion: pet
-            });
-
+            await updateDoc(userRef, { coins: newUserCoins, companion: pet });
             updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
             renderCompanion(pet);
             setTimeout(() => petMessage.textContent = "En attente...", 2000);
@@ -736,51 +610,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (renameBtn) {
         renameBtn.addEventListener('click', async () => {
             if (!currentUser) return;
-
             const newName = await myPrompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`, "Ex: Glitch 2.0");
             if (!newName || newName.trim() === "") return;
-
+            
             const userRef = doc(db, "users", currentUser.uid);
             const snap = await getDoc(userRef);
             const data = snap.data();
             const userCoins = data.coins || 0;
-
-            if (userCoins < PET_CONFIG.costRename) {
-                await myAlert("Crédits insuffisants.");
-                return;
-            }
+            if (userCoins < PET_CONFIG.costRename) { await myAlert("Crédits insuffisants."); return; }
 
             let pet = data.companion;
             pet.name = newName.trim();
             let newUserCoins = userCoins - PET_CONFIG.costRename;
-
-            await updateDoc(userRef, {
-                coins: newUserCoins,
-                companion: pet
-            });
-
+            await updateDoc(userRef, { coins: newUserCoins, companion: pet });
             updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
             renderCompanion(pet);
         });
     }
 
-    // --- GESTION DU POMODORO ---
+    // --- 8. POMODORO ---
     const pomoSection = document.getElementById('pomodoro-section');
     const pomoDisplay = document.getElementById('pomodoro-display');
     const pomoStartBtn = document.getElementById('pomo-start-btn');
     const pomoResetBtn = document.getElementById('pomo-reset-btn');
-
     let pomoTimer = null;
-    let pomoTimeLeft = 25 * 60; // 25 minutes en secondes
+    let pomoTimeLeft = 25 * 60;
     let isPomoRunning = false;
 
     function updatePomoDisplay() {
         const m = Math.floor(pomoTimeLeft / 60).toString().padStart(2, '0');
         const s = (pomoTimeLeft % 60).toString().padStart(2, '0');
         if(pomoDisplay) pomoDisplay.textContent = `${m}:${s}`;
-        
-        if(isPomoRunning) document.title = `${m}:${s} - Focus`;
-        else document.title = "Mes Deadlines";
+        document.title = isPomoRunning ? `${m}:${s} - Focus` : "Mes Deadlines";
     }
 
     if(pomoStartBtn) {
@@ -794,7 +655,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 isPomoRunning = true;
                 pomoStartBtn.textContent = "❚❚ PAUSE";
                 if(pomoSection) pomoSection.classList.add('timer-running');
-                
                 pomoTimer = setInterval(() => {
                     if (pomoTimeLeft > 0) {
                         pomoTimeLeft--;
@@ -804,9 +664,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         isPomoRunning = false;
                         pomoSection.classList.remove('timer-running');
                         pomoStartBtn.textContent = "▶ START";
-                        
                         myAlert("🍅 SESSION TERMINÉE !\nPrends 5 minutes de pause.");
-                        
                         pomoTimeLeft = 25 * 60;
                         updatePomoDisplay();
                     }
@@ -826,31 +684,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // --- 9. HELPERS UI ---
     function uiForLoggedIn(user) {
-        loginBtn.style.display = "none";
+        if(loginBtn) loginBtn.style.display = "none";
         if(signupBtn) signupBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
+        
+        // On affiche le bouton Réglages (où se trouve le logout maintenant)
         if(settingsBtn) settingsBtn.style.display = "inline-block";
+        
         if(projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
         if(projectStatsDiv) projectStatsDiv.style.display = "flex";
         if(pomoSection) pomoSection.style.display = 'flex';
-        // Afficher bouton config
-        if(apiConfigBtn) apiConfigBtn.style.display = "inline-block";
     }
 
     function uiForLoggedOut() {
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
+        if(loginBtn) loginBtn.style.display = "inline-block";
         if(signupBtn) signupBtn.style.display = "inline-block";
-        userDetails.textContent = "";
+        
+        // On cache le bouton Réglages
+        if(settingsBtn) settingsBtn.style.display = "none";
+        
         if(projectForm) projectForm.style.display = "none";
         if (addProjectBtn) addProjectBtn.disabled = true;
         if(projectStatsDiv) projectStatsDiv.style.display = "none";
         if(pomoSection) pomoSection.style.display = 'none';
-        if(settingsBtn) settingsBtn.style.display = "none";
-        
-        if(apiConfigBtn) apiConfigBtn.style.display = "none";
 
         if(pomoTimer) {
              clearInterval(pomoTimer);
@@ -864,42 +722,26 @@ document.addEventListener("DOMContentLoaded", () => {
     async function updateUserStats(user, xpGained = 0, coinsGained = 0) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
-        
-        let currentXP = 0;
-        let currentCoins = 0;
-
+        let currentXP = 0; let currentCoins = 0;
         if (userSnap.exists()) {
             const data = userSnap.data();
             currentXP = data.xp || 0;
             currentCoins = data.coins || 0;
         }
-        
         let newXP = currentXP + xpGained;
         let newCoins = currentCoins + coinsGained;
         let newLevel = Math.floor(newXP / GAME_CONFIG.levelStep) + 1;
-
-        await setDoc(userRef, { 
-            xp: newXP, 
-            coins: newCoins,
-            level: newLevel, 
-            email: user.email 
-        }, { merge: true });
-
+        await setDoc(userRef, { xp: newXP, coins: newCoins, level: newLevel, email: user.email }, { merge: true });
         updateTopBarUI(newXP, newLevel, newCoins);
-        
-        if (xpGained > 0 || coinsGained > 0) {
-            await myAlert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
-        }
+        if (xpGained > 0 || coinsGained > 0) await myAlert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
     }
 
     async function syncUserData(user) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
-        
         if (userSnap.exists()) {
             const data = userSnap.data();
-            const coins = data.coins || 0;
-            updateTopBarUI(data.xp || 0, data.level || 1, coins);
+            updateTopBarUI(data.xp || 0, data.level || 1, data.coins || 0);
         } else {
             updateTopBarUI(0, 1, 0);
         }
@@ -914,15 +756,10 @@ document.addEventListener("DOMContentLoaded", () => {
         
         userLevelContainer.style.display = 'flex';
         levelBadge.textContent = `LVL ${level}`;
-        
         const currentLevelXp = xp % GAME_CONFIG.levelStep;
         xpText.textContent = `${currentLevelXp} / ${GAME_CONFIG.levelStep} XP`;
-        
         const progress = (currentLevelXp) / GAME_CONFIG.levelStep * 100;
         xpBarFill.style.width = `${progress}%`;
-
-        if(coinsDisplay) {
-            coinsDisplay.textContent = `${coins} ₵`;
-        }
+        if(coinsDisplay) coinsDisplay.textContent = `${coins} ₵`;
     }
 });
