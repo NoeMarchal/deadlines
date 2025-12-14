@@ -27,6 +27,7 @@ const modalOverlay = document.getElementById('custom-modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const modalText = document.getElementById('modal-text');
 const modalInput = document.getElementById('modal-input');
+const signupBtn = document.getElementById("signup-btn");
 const btnOk = document.getElementById('modal-btn-ok');
 const btnCancel = document.getElementById('modal-btn-cancel');
 
@@ -164,6 +165,12 @@ document.addEventListener("DOMContentLoaded", () => {
     logoutBtn.addEventListener("click", () => {
         signOut(auth).catch((error) => console.error(error));
     });
+
+if(signupBtn) {
+    signupBtn.addEventListener("click", () => {
+        signInWithPopup(auth, provider).catch((error) => console.error(error));
+    });
+}
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -455,6 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function uiForLoggedIn(user) {
         loginBtn.style.display = "none";
+        if(signupBtn) signupBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
         if(projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
@@ -464,6 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function uiForLoggedOut() {
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
+        if(signupBtn) signupBtn.style.display = "inline-block";
         userDetails.textContent = "";
         if(projectForm) projectForm.style.display = "none";
         if (addProjectBtn) addProjectBtn.disabled = true;
