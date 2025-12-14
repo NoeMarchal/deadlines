@@ -811,3 +811,51 @@ main,
     justify-content: center;
     gap: 15px;
 }
+
+/* --- RESPONSIVE DASHBOARD (Ajouter à la fin du fichier style.css) --- */
+
+/* Pour les tablettes et petits écrans (moins de 950px) */
+@media (max-width: 950px) {
+    .dashboard-container {
+        flex-direction: column; /* Empile les éléments verticalement */
+        gap: 30px;
+        align-items: center; /* Centre le contenu */
+    }
+
+    .left-sidebar {
+        width: 100%; /* Prend toute la largeur disponible */
+        max-width: 500px; /* Limite la largeur pour que le compagnon reste joli */
+        margin-top: 0; /* Enlève le décalage "alignement titre" du mode bureau */
+        order: 2; /* OPTIONNEL : Met le compagnon EN DESSOUS des projets sur mobile. Enlève cette ligne si tu le veux au-dessus. */
+    }
+
+    .right-content {
+        width: 100%;
+        order: 1; /* Le contenu principal passe en premier */
+    }
+
+    /* Ajustement du compagnon pour qu'il prenne bien la place */
+    #companion-section {
+        width: 100%; 
+        box-sizing: border-box; /* Important pour que le padding ne dépasse pas */
+    }
+}
+
+/* Ajustements supplémentaires pour Mobiles (moins de 600px) */
+@media (max-width: 600px) {
+    /* On s'assure que le conteneur principal n'a pas trop de marge */
+    main {
+        margin: 20px auto;
+        padding: 0 10px;
+    }
+
+    /* Le formulaire "Ajouter un projet" est déjà géré, mais on peut affiner */
+    #project-form button {
+        width: 100%; /* Bouton pleine largeur sur mobile, plus facile à cliquer */
+    }
+
+    /* Adaptation des boutons du compagnon pour les petits écrans */
+    .pet-actions {
+        flex-direction: column; /* Boutons l'un sous l'autre si l'écran est très étroit */
+    }
+}
