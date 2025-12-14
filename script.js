@@ -324,18 +324,28 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 await myAlert("Analyse du document en cours...");
                 const text = await extractTextFromPDF(file);
-                const tasks = await generateTasksFromText(text);
+                const newTasks = await generateTasksFromText(text);
 
-                const tasksObjects = tasks.map((t, index) => ({
+
+                const newTasksObjects = newTasks.map((t, index) => ({
                     id: Date.now() + index,
                     desc: t,
                     done: false
                 }));
 
                 const projectRef = doc(db, "projects", targetProjectIdForAI);
-                await updateDoc(projectRef, { aiTasks: tasksObjects });
 
-                await myAlert(`Terminé ! ${tasks.length} tâches ajoutées.`);
+                const projectSnap = await getDoc(projectRef);
+                let existingTasks = [];
+                if (projectSnap.exists()) {
+                    existingTasks = projectSnap.data().aiTasks || [];
+                }
+
+                const mergedTasks = [...existingTasks, ...newTasksObjects];
+
+                await updateDoc(projectRef, { aiTasks: mergedTasks });
+
+                await myAlert(`Terminé ! ${newTasks.length} tâches ajoutées à la liste.`);
 
             } catch (error) {
                 console.error(error);
@@ -493,15 +503,27 @@ document.addEventListener("DOMContentLoaded", () => {
          `;
 
         let tasksHTML = '';
-        if (aiTasks.length > 0) {
-            const tasksList = aiTasks.map(t => `
-                <div class="task-item ${t.done ? 'done' : ''}">
+        const tasksList = aiTasks.map(t => `
+            <div class="task-item ${t.done ? 'done' : ''}">
+                <div class="task-left">
                     <input type="checkbox" class="task-checkbox" data-pid="${projectId}" data-tid="${t.id}" ${t.done ? 'checked' : ''}>
                     <span>${t.desc}</span>
                 </div>
-            `).join('');
-            tasksHTML = `<div class="ai-tasks-container"><span class="ai-tasks-title">Checklist IA :</span>${tasksList}</div>`;
-        }
+                <button class="task-delete-small" data-pid="${projectId}" data-tid="${t.id}" title="Supprimer cette ligne">×</button>
+            </div>
+        `).join('');
+
+        tasksHTML = `
+            <div class="ai-tasks-container">
+                <span class="ai-tasks-title">CHECKLIST (IA & PERSO) :</span>
+                ${tasksList}
+                
+                <div class="add-task-row">
+                    <input type="text" class="add-task-input" id="input-task-${projectId}" placeholder="Ajouter une étape...">
+                    <button class="add-task-btn-small" data-id="${projectId}">OK</button>
+                </div>
+            </div>
+        `;
 
         const progressInnerClass = status === "completed" ? "is-completed" : "";
 
@@ -523,11 +545,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return projectCard;
     }
 
-    // --- CORRECTION MAJEURE : RESTAURATION DES ÉCOUTEURS D'ÉVÉNEMENTS ---
     if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
-            
-            // 1. SUPPRESSION
+
+
             if (e.target.classList.contains("delete-btn")) {
                 const idToDelete = e.target.getAttribute("data-id");
                 if (await myConfirm("Supprimer ce projet ?")) {
@@ -535,7 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // 2. TERMINER
+
             if (e.target.classList.contains('complete-btn')) {
                 const idToComplete = e.target.getAttribute('data-id');
                 try {
@@ -544,36 +565,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (err) { console.error(err); }
             }
 
-            // 3. IA TASKS (PDF)
             if (e.target.classList.contains('ai-task-btn')) {
                 targetProjectIdForAI = e.target.getAttribute('data-id');
                 if (pdfInput) pdfInput.click();
             }
 
-            // 4. MODIFIER (NOUVEAU)
+
             if (e.target.classList.contains('edit-btn')) {
                 const pid = e.target.getAttribute('data-id');
                 const docRef = doc(db, "projects", pid);
                 const snap = await getDoc(docRef);
-                
-                if(snap.exists()){
+
+                if (snap.exists()) {
                     const data = snap.data();
                     editIdInput.value = pid;
                     editNameInput.value = data.name;
                     editStartInput.value = data.start;
                     editEndInput.value = data.end;
                     editPriorityInput.value = data.priority || 'p4';
-                    
+
                     editOverlay.style.display = 'flex';
                 }
             }
 
-            // 5. CHECKBOX IA
             if (e.target.classList.contains('task-checkbox')) {
                 const pid = e.target.getAttribute('data-pid');
                 const tid = parseFloat(e.target.getAttribute('data-tid'));
                 const isChecked = e.target.checked;
-                
+
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
                     if (isChecked) taskItem.classList.add('done');
@@ -582,7 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const projectRef = doc(db, "projects", pid);
                 const projectSnap = await getDoc(projectRef);
-                
+
                 if (projectSnap.exists()) {
                     let tasks = projectSnap.data().aiTasks || [];
                     tasks = tasks.map(t => {
@@ -590,6 +609,52 @@ document.addEventListener("DOMContentLoaded", () => {
                         return t;
                     });
                     await updateDoc(projectRef, { aiTasks: tasks });
+                }
+            }
+            if (e.target.classList.contains('add-task-btn-small')) {
+                const pid = e.target.getAttribute('data-id');
+                const input = document.getElementById(`input-task-${pid}`);
+                const text = input.value.trim();
+
+                if (!text) return;
+
+                const projectRef = doc(db, "projects", pid);
+                const projectSnap = await getDoc(projectRef);
+
+                if (projectSnap.exists()) {
+                    let currentTasks = projectSnap.data().aiTasks || [];
+
+                    const newTask = {
+                        id: Date.now(),
+                        desc: text,
+                        done: false
+                    };
+
+
+                    currentTasks.push(newTask);
+
+                    await updateDoc(projectRef, { aiTasks: currentTasks });
+                }
+            }
+
+            if (e.target.classList.contains('task-delete-small')) {
+                const pid = e.target.getAttribute('data-pid');
+                const tid = parseFloat(e.target.getAttribute('data-tid'));
+
+
+                const taskItem = e.target.closest('.task-item');
+                if (taskItem) taskItem.remove();
+
+                const projectRef = doc(db, "projects", pid);
+                const projectSnap = await getDoc(projectRef);
+
+                if (projectSnap.exists()) {
+                    let currentTasks = projectSnap.data().aiTasks || [];
+
+
+                    const updatedTasks = currentTasks.filter(t => t.id !== tid);
+
+                    await updateDoc(projectRef, { aiTasks: updatedTasks });
                 }
             }
         });
