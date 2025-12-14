@@ -8,6 +8,8 @@ import {
   query,
   orderBy,
   where,
+  getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 import {
   getAuth,
@@ -33,22 +35,29 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
-// --- SYSTÈME D'ALERTES PERSONNALISÉES (Code copié pour les archives) ---
+const GAME_CONFIG = {
+  xpReward: 500,
+  coinReward: 700,
+  levelStep: 800
+};
+
+
 const modalOverlay = document.getElementById("custom-modal-overlay");
 const modalTitle = document.getElementById("modal-title");
 const modalText = document.getElementById("modal-text");
 const modalInput = document.getElementById("modal-input");
-const btnOk = document.getElementById("modal-btn-ok");
-const btnCancel = document.getElementById("modal-btn-cancel");
 
 function showCustomModal(type, message, placeholder = "") {
   return new Promise((resolve) => {
     if (!modalOverlay) {
-      // Fallback si le HTML n'est pas chargé
       if (type === "confirm") return resolve(confirm(message));
       alert(message);
       return resolve(true);
     }
+
+    const btnOk = document.getElementById("modal-btn-ok");
+    const btnCancel = document.getElementById("modal-btn-cancel");
+
     modalOverlay.style.display = "flex";
     modalText.textContent = message;
 
@@ -68,7 +77,6 @@ function showCustomModal(type, message, placeholder = "") {
       if (modalTitle) modalTitle.textContent = "MESSAGE SYSTÈME";
     }
 
-    // Remplacement des boutons pour supprimer les anciens écouteurs
     const newBtnOk = btnOk.cloneNode(true);
     const newBtnCancel = btnCancel.cloneNode(true);
     btnOk.parentNode.replaceChild(newBtnOk, btnOk);
@@ -88,17 +96,83 @@ function showCustomModal(type, message, placeholder = "") {
 
 const myConfirm = (msg) => showCustomModal("confirm", msg);
 
-// --- LOGIQUE PRINCIPALE DES ARCHIVES ---
+
 document.addEventListener("DOMContentLoaded", () => {
   const archiveGrid = document.getElementById("archive-grid");
   const projectStatsDiv = document.getElementById("project-stats");
   const completedCountSpan = document.getElementById("completed-count");
   const totalCountSpan = document.getElementById("total-count");
   const loginBtn = document.getElementById("login-btn");
-  const logoutBtn = document.getElementById("logout-btn");
   const userDetails = document.getElementById("user-details");
+  const userLevelContainer = document.getElementById('user-level-container');
+
+
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsOverlay = document.getElementById('settings-overlay');
+  const closeSettingsBtn = document.getElementById('close-settings-btn');
+  const themeSelector = document.getElementById('theme-selector');
+  const settingsApiKeyInput = document.getElementById('settings-api-key');
+  const saveApiBtn = document.getElementById('save-api-btn');
+  const logoutBtnSettings = document.getElementById('logout-btn-settings');
+
+
+  const helpBtn = document.getElementById('help-btn');
+  const helpOverlay = document.getElementById('help-modal-overlay');
+  const closeHelpBtn = document.getElementById('close-help-btn');
 
   let unsubscribeFromProjects = null;
+
+
+  const currentTheme = localStorage.getItem('site_theme') || 'theme-retro';
+  document.body.className = currentTheme;
+  if (themeSelector) themeSelector.value = currentTheme;
+
+
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      settingsOverlay.style.display = 'flex';
+      const key = localStorage.getItem('GEMINI_API_KEY');
+      if (key) settingsApiKeyInput.value = key;
+    });
+  }
+
+  if (closeSettingsBtn) {
+    closeSettingsBtn.addEventListener('click', () => {
+      settingsOverlay.style.display = 'none';
+    });
+  }
+
+  if (themeSelector) {
+    themeSelector.addEventListener('change', (e) => {
+      const newTheme = e.target.value;
+      document.body.className = newTheme;
+      localStorage.setItem('site_theme', newTheme);
+    });
+  }
+
+  if (saveApiBtn) {
+    saveApiBtn.addEventListener('click', () => {
+      const newKey = settingsApiKeyInput.value.trim();
+      if (newKey) {
+        localStorage.setItem('GEMINI_API_KEY', newKey);
+        alert("Clé API enregistrée !");
+      }
+    });
+  }
+
+  if (logoutBtnSettings) {
+    logoutBtnSettings.addEventListener('click', () => {
+      signOut(auth).catch((error) => console.error(error));
+      settingsOverlay.style.display = 'none';
+    });
+  }
+
+  if (helpBtn && helpOverlay && closeHelpBtn) {
+    helpBtn.addEventListener('click', () => { helpOverlay.style.display = 'flex'; });
+    closeHelpBtn.addEventListener('click', () => { helpOverlay.style.display = 'none'; });
+    helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) helpOverlay.style.display = 'none'; });
+  }
+
 
   if (loginBtn) {
     loginBtn.addEventListener("click", () => {
@@ -106,15 +180,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      signOut(auth).catch((error) => console.error(error));
-    });
-  }
-
   onAuthStateChanged(auth, (user) => {
     if (user) {
       uiForLoggedIn(user);
+      syncUserData(user);
       if (unsubscribeFromProjects) unsubscribeFromProjects();
       unsubscribeFromProjects = listenToProjects(user.uid);
     } else {
@@ -182,8 +251,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <h3>${project.name}</h3>
                 <span class="project-dates">
                     ${new Date(
-                      project.start
-                    ).toLocaleDateString()} - ${new Date(
+      project.start
+    ).toLocaleDateString()} - ${new Date(
       project.end
     ).toLocaleDateString()}
                 </span>
@@ -201,19 +270,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return projectCard;
   }
 
-  // GESTION DU CLIC (Suppression)
   if (archiveGrid) {
     archiveGrid.addEventListener("click", async (e) => {
       if (e.target.classList.contains("delete-btn")) {
         const idToDelete = e.target.getAttribute("data-id");
-
-        // ICI ON UTILISE NOTRE MODALE PERSONNALISÉE
-        const confirmed = await myConfirm(
-          "Êtes-vous sûr de vouloir supprimer ce projet archivé ?"
-        );
-
+        const confirmed = await myConfirm("Êtes-vous sûr de vouloir supprimer ce projet archivé ?");
         if (!confirmed) return;
-
         try {
           const docRef = doc(db, "projects", idToDelete);
           await deleteDoc(docRef);
@@ -226,16 +288,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function uiForLoggedIn(user) {
     if (loginBtn) loginBtn.style.display = "none";
-    if (logoutBtn) logoutBtn.style.display = "inline-block";
-    if (userDetails)
-      userDetails.textContent = `Connecté: ${user.email.split("@")[0]}`;
+    if (settingsBtn) settingsBtn.style.display = "inline-block";
+
+    if (userDetails) userDetails.textContent = "";
     if (projectStatsDiv) projectStatsDiv.style.display = "flex";
   }
 
   function uiForLoggedOut() {
     if (loginBtn) loginBtn.style.display = "inline-block";
-    if (logoutBtn) logoutBtn.style.display = "none";
+    if (settingsBtn) settingsBtn.style.display = "none";
+
     if (userDetails) userDetails.textContent = "";
     if (projectStatsDiv) projectStatsDiv.style.display = "none";
+  }
+
+
+  async function syncUserData(user) {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      const coins = data.coins || 0;
+      updateTopBarUI(data.xp || 0, data.level || 1, coins);
+    } else {
+      updateTopBarUI(0, 1, 0);
+    }
+  }
+
+  function updateTopBarUI(xp, level, coins) {
+    if (!userLevelContainer) return;
+    const levelBadge = document.getElementById('level-badge');
+    const xpBarFill = document.getElementById('xp-bar-fill');
+    const xpText = document.getElementById('xp-text');
+
+    userLevelContainer.style.display = 'flex';
+    levelBadge.textContent = `LVL ${level}`;
+
+    const currentLevelXp = xp % GAME_CONFIG.levelStep;
+    xpText.textContent = `${currentLevelXp} / ${GAME_CONFIG.levelStep} XP`;
+
+    const progress = (currentLevelXp) / GAME_CONFIG.levelStep * 100;
+    xpBarFill.style.width = `${progress}%`;
   }
 });
