@@ -142,10 +142,23 @@ let targetProjectIdForAI = null;
 const pdfInput = document.getElementById('pdf-upload-input');
 
 // Sauvegarder / Récupérer la clé API
+// --- GESTION INTELLIGENTE DE LA CLÉ ---
+
 function getGeminiKey() {
-    return localStorage.getItem('GEMINI_API_KEY');
+    // 1. On regarde si l'utilisateur a rentré sa PROPRE clé (mode expert)
+    const userKey = localStorage.getItem('GEMINI_API_KEY');
+    
+    if (userKey) {
+        return userKey; 
+    } else {
+        // 2. Sinon, on utilise ta clé "CADEAU" par défaut (Sponsoring)
+        // C'est ici que tu mets TA clé qui fonctionne (celle en gemini-2.5-flash)
+        return "AIzaSyAr3pws_6yXgjp4PL8UOTyf-NAFo1yyhQk"; 
+    }
 }
+
 function setGeminiKey(key) {
+    // Si l'utilisateur veut mettre sa propre clé plus tard
     localStorage.setItem('GEMINI_API_KEY', key);
 }
 
