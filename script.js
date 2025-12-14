@@ -40,12 +40,12 @@ const projectsCollection = collection(db, "projects");
 const GAME_CONFIG = {
     xpReward: 500,
     coinReward: 700,
-    levelStep: 800
+    levelStep: 1000
 };
 
 const PET_CONFIG = {
-    costFeed: 50,
-    xpGain: 300,
+    costFeed: 100,
+    xpGain: 250,
     costRename: 350,
     stages: [
         { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
@@ -523,30 +523,63 @@ document.addEventListener("DOMContentLoaded", () => {
         return projectCard;
     }
 
-
+    // --- CORRECTION MAJEURE : RESTAURATION DES ÉCOUTEURS D'ÉVÉNEMENTS ---
     if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
+            
+            // 1. SUPPRESSION
+            if (e.target.classList.contains("delete-btn")) {
+                const idToDelete = e.target.getAttribute("data-id");
+                if (await myConfirm("Supprimer ce projet ?")) {
+                    try { await deleteDoc(doc(db, "projects", idToDelete)); } catch (err) { console.error(err); }
+                }
+            }
 
+            // 2. TERMINER
+            if (e.target.classList.contains('complete-btn')) {
+                const idToComplete = e.target.getAttribute('data-id');
+                try {
+                    await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
+                    if (currentUser) updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
+                } catch (err) { console.error(err); }
+            }
 
-// Checkbox Task (CORRIGÉ)
+            // 3. IA TASKS (PDF)
+            if (e.target.classList.contains('ai-task-btn')) {
+                targetProjectIdForAI = e.target.getAttribute('data-id');
+                if (pdfInput) pdfInput.click();
+            }
+
+            // 4. MODIFIER (NOUVEAU)
+            if (e.target.classList.contains('edit-btn')) {
+                const pid = e.target.getAttribute('data-id');
+                const docRef = doc(db, "projects", pid);
+                const snap = await getDoc(docRef);
+                
+                if(snap.exists()){
+                    const data = snap.data();
+                    editIdInput.value = pid;
+                    editNameInput.value = data.name;
+                    editStartInput.value = data.start;
+                    editEndInput.value = data.end;
+                    editPriorityInput.value = data.priority || 'p4';
+                    
+                    editOverlay.style.display = 'flex';
+                }
+            }
+
+            // 5. CHECKBOX IA
             if (e.target.classList.contains('task-checkbox')) {
-                // 1. Récupération des données
                 const pid = e.target.getAttribute('data-pid');
                 const tid = parseFloat(e.target.getAttribute('data-tid'));
                 const isChecked = e.target.checked;
                 
-                // 2. MISE À JOUR VISUELLE IMMÉDIATE (Le fix est ici)
-                // On trouve le parent .task-item pour lui changer sa classe tout de suite
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
-                    if (isChecked) {
-                        taskItem.classList.add('done'); // Barre le texte
-                    } else {
-                        taskItem.classList.remove('done'); // Débarre le texte
-                    }
+                    if (isChecked) taskItem.classList.add('done');
+                    else taskItem.classList.remove('done');
                 }
 
-                // 3. Mise à jour de la base de données (en arrière-plan)
                 const projectRef = doc(db, "projects", pid);
                 const projectSnap = await getDoc(projectRef);
                 
@@ -562,7 +595,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     if (saveEditBtn) {
         saveEditBtn.addEventListener('click', async () => {
             const pid = editIdInput.value;
@@ -577,7 +609,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             try {
-
                 const docRef = doc(db, "projects", pid);
                 await updateDoc(docRef, {
                     name: name,
