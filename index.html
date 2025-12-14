@@ -36,14 +36,12 @@
             </span>
         </div>
 
-        <div id="auth-right">
-            <span id="user-details"></span>
-            <button id="api-config-btn" title="Configurer Clé IA">⚙️ API</button>
-            <button id="help-btn" title="Manuel d'utilisation">❓ AIDE</button>
-            <button id="signup-btn">Créer un compte</button>
-            <button id="login-btn">Se connecter</button>
-            <button id="logout-btn" style="display: none;">Se déconnecter</button>
-        </div>
+<div id="auth-right">
+    <span id="user-details" style="display:none;"></span> <button id="login-btn">Se connecter</button>
+    <button id="signup-btn">Créer un compte</button>
+    
+    <button id="settings-btn" style="display: none; font-size: 1.2em;" title="Réglages">⚙️</button>
+</div>
     </div>
 
     <header>
@@ -180,6 +178,36 @@
         <div style="margin-top: 20px;">
             <button id="close-help-btn" class="pet-btn">COMPRIS</button>
         </div>
+    </div>
+</div>
+<div id="settings-overlay" style="display: none;">
+    <div id="settings-box">
+        <h3>PARAMÈTRES</h3>
+        
+        <div class="settings-section">
+            <label>🎨 Interface :</label>
+            <select id="theme-selector">
+                <option value="theme-retro">Cyberpunk (Actuel)</option>
+                <option value="theme-classic">Classique (Sombre)</option>
+                <option value="theme-light">Clair (Bureau)</option>
+            </select>
+        </div>
+
+        <div class="settings-section">
+            <label>🔑 Clé API Gemini :</label>
+            <input type="password" id="settings-api-key" placeholder="Ta clé API ici...">
+            <button id="save-api-btn" class="pet-btn">Enregistrer</button>
+        </div>
+
+        <hr style="border-color: #333; margin: 20px 0;">
+
+        <button id="logout-btn-settings" class="pet-btn" style="border-color: #ff0000; color: #ff0000; width: 100%;">
+            SE DÉCONNECTER
+        </button>
+
+        <button id="close-settings-btn" style="margin-top: 10px; background: transparent; border: none; color: #777; cursor: pointer; width: 100%;">
+            Fermer
+        </button>
     </div>
 </div>
   </body> 

@@ -28,7 +28,66 @@ const modalText = document.getElementById('modal-text');
 const modalInput = document.getElementById('modal-input');
 const signupBtn = document.getElementById("signup-btn");
 const apiConfigBtn = document.getElementById("api-config-btn");
+// --- GESTION DES RÉGLAGES & THÈMES ---
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+    const themeSelector = document.getElementById('theme-selector');
+    const settingsApiKeyInput = document.getElementById('settings-api-key');
+    const saveApiBtn = document.getElementById('save-api-btn');
+    const logoutBtnSettings = document.getElementById('logout-btn-settings'); // Nouveau bouton logout
 
+    // 1. Charger le thème sauvegardé
+    const currentTheme = localStorage.getItem('site_theme') || 'theme-retro';
+    document.body.className = currentTheme;
+    if(themeSelector) themeSelector.value = currentTheme;
+
+    // 2. Ouvrir les réglages
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            settingsOverlay.style.display = 'flex';
+            // Pré-remplir la clé API si elle existe (sauf si c'est la clé "cadeau")
+            const key = localStorage.getItem('GEMINI_API_KEY');
+            if(key) settingsApiKeyInput.value = key;
+        });
+    }
+
+    // 3. Fermer les réglages
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsOverlay.style.display = 'none';
+        });
+    }
+
+    // 4. Changer de Thème
+    if (themeSelector) {
+        themeSelector.addEventListener('change', (e) => {
+            const newTheme = e.target.value;
+            // Applique la classe au Body (ce qui active les variables CSS)
+            document.body.className = newTheme;
+            // Sauvegarde le choix
+            localStorage.setItem('site_theme', newTheme);
+        });
+    }
+
+    // 5. Sauvegarder la Clé API depuis les réglages
+    if (saveApiBtn) {
+        saveApiBtn.addEventListener('click', () => {
+            const newKey = settingsApiKeyInput.value.trim();
+            if (newKey) {
+                setGeminiKey(newKey);
+                alert("Clé API enregistrée !");
+            }
+        });
+    }
+
+    // 6. Gestion du Logout (Déplacé ici)
+    if (logoutBtnSettings) {
+        logoutBtnSettings.addEventListener('click', () => {
+            signOut(auth).catch((error) => console.error(error));
+            settingsOverlay.style.display = 'none'; // Fermer le menu
+        });
+    }
 // --- FONCTIONS MODALES CORRIGÉES ---
 // Cette version recharge les boutons à chaque appel pour éviter le crash "parentNode is null"
 function showCustomModal(type, message, placeholder = "") {
@@ -771,6 +830,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loginBtn.style.display = "none";
         if(signupBtn) signupBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
+        if(settingsBtn) settingsBtn.style.display = "inline-block";
         if(projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
         if(projectStatsDiv) projectStatsDiv.style.display = "flex";
@@ -788,6 +848,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (addProjectBtn) addProjectBtn.disabled = true;
         if(projectStatsDiv) projectStatsDiv.style.display = "none";
         if(pomoSection) pomoSection.style.display = 'none';
+        if(settingsBtn) settingsBtn.style.display = "none";
         
         if(apiConfigBtn) apiConfigBtn.style.display = "none";
 
