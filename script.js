@@ -173,7 +173,7 @@ async function generateTasksFromText(text) {
     if (!apiKey) throw new Error("Clé API manquante");
 
     // CORRECTION MAJEURE ICI : Utilisation de la version '002' stable
-    const modelName = "gemini-2.0-flash";
+    const modelName = "gemini-2.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     
     const prompt = `
