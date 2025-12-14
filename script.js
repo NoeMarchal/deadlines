@@ -22,7 +22,7 @@ import {
     onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
-// --- SYSTÈME D'ALERTES PERSONNALISÉES ---
+
 const modalOverlay = document.getElementById('custom-modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const modalText = document.getElementById('modal-text');
@@ -106,7 +106,6 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
-// --- CONFIGURATION DU JEU ---
 const GAME_CONFIG = {
     xpReward: 500,
     coinReward: 700,
@@ -457,7 +456,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function uiForLoggedIn(user) {
         loginBtn.style.display = "none";
         logoutBtn.style.display = "inline-block";
-        userDetails.textContent = `Opérateur: ${user.email.split('@')[0]}`;
         if(projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
         if(projectStatsDiv) projectStatsDiv.style.display = "flex";
