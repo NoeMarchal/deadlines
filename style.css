@@ -28,8 +28,8 @@ header h1 {
 
 /* --- MISE EN PAGE 2 COLONNES --- */
 main {
-    max-width: 95%; /* Un peu plus large pour respirer */
-    margin: 40px auto; /* Marge en haut pour descendre un peu le tout */
+    max-width: 95%; 
+    margin: 40px auto; 
     padding: 0 20px;
     background-color: transparent;
     border: none;
@@ -38,7 +38,7 @@ main {
 
 .dashboard-container {
     display: flex;
-    gap: 40px; /* Plus d'espace entre le compagnon et le formulaire */
+    gap: 40px; 
     align-items: flex-start; 
 }
 
@@ -46,10 +46,6 @@ main {
 .left-sidebar {
     width: 280px; 
     flex-shrink: 0;
-    /* ASTUCE D'ALIGNEMENT :
-       On ajoute une marge en haut pour que le HAUT du cadre vert
-       s'aligne parfaitement avec le HAUT du titre "AJOUTER UN PROJET" à droite.
-    */
     margin-top: 58px; 
 }
 
@@ -61,12 +57,11 @@ main {
 /* --- STYLE DU COMPAGNON (FIX) --- */
 #companion-section {
     background-color: #000;
-    border: 2px solid #00ff00; /* Bordure un peu plus épaisse */
-    padding: 25px 20px; /* Espace interne (Haut/Bas Gauche/Droite) */
+    border: 2px solid #00ff00; 
+    padding: 25px 20px; 
     text-align: center;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); /* Légère lueur verte */
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); 
     
-    /* Flexbox pour tout centrer verticalement à l'intérieur */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -76,7 +71,7 @@ main {
 .companion-header {
     width: 100%;
     display: flex;
-    flex-direction: column; /* On empile le Titre et le Niveau */
+    flex-direction: column; 
     align-items: center;
     gap: 5px;
     border-bottom: 1px solid #333;
@@ -92,7 +87,7 @@ main {
 
 #pet-level-display {
     font-size: 0.9em;
-    color: #FFD700; /* Couleur Or pour le niveau */
+    color: #FFD700; 
     font-weight: bold;
 }
 
@@ -106,12 +101,12 @@ main {
 
 #pet-visual {
     font-family: 'Courier New', monospace;
-    font-size: 1.8em; /* Un peu plus gros */
+    font-size: 1.8em; 
     color: #00ff00;
     margin: 10px 0;
     white-space: pre;
     text-shadow: 0 0 8px #00ff00;
-    min-height: 60px; /* Hauteur fixe pour éviter que ça saute quand il change */
+    min-height: 60px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -133,7 +128,6 @@ main {
     transition: width 0.3s ease;
 }
 
-/* --- BOUTONS DU COMPAGNON (Correction des boutons blancs) --- */
 .pet-actions {
     display: flex;
     gap: 10px;
@@ -142,16 +136,16 @@ main {
 }
 
 .pet-btn {
-    background-color: #000; /* Fond noir */
-    color: #fff;            /* Texte blanc */
-    border: 1px solid #555; /* Bordure grise */
+    background-color: #000; 
+    color: #fff;            
+    border: 1px solid #555; 
     padding: 8px 12px;
     cursor: pointer;
     font-family: 'Pixelify Sans', monospace;
     font-size: 0.8em;
     text-transform: uppercase;
     transition: all 0.2s;
-    flex: 1; /* Les boutons prennent toute la largeur dispo */
+    flex: 1; 
 }
 
 .pet-btn:hover {
@@ -367,16 +361,15 @@ hr {
   line-height: 1;
 }
 
-/* Ajoutez #signup-btn à la liste pour avoir la base (police, bordure, etc.) */
 #login-btn,
 #logout-btn,
-#signup-btn {
+#signup-btn,
+#api-config-btn {
   color: #aaa;
   border: 1px solid #555;
-  margin-left: 10px; /* Petit espace entre les boutons */
+  margin-left: 10px; 
 }
 
-/* Style spécifique pour le bouton "Créer un compte" (Vert Matrix) */
 #signup-btn {
     border-color: #00ff00;
     color: #00ff00;
@@ -386,7 +379,12 @@ hr {
 #signup-btn:hover {
     background-color: #00ff00;
     color: #000;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); /* Effet néon */
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); 
+}
+
+#api-config-btn:hover {
+    color: #FFD700;
+    border-color: #FFD700;
 }
 
 #login-btn:hover,
@@ -421,6 +419,7 @@ hr {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap; /* Pour que ça passe à la ligne sur mobile */
 }
 
 .complete-btn {
@@ -438,6 +437,25 @@ hr {
 .complete-btn:hover {
   background-color: #00ff00;
   color: #000000;
+}
+
+/* --- STYLE BOUTON IA --- */
+.ai-task-btn {
+    font-family: "Pixelify Sans", "Courier New", Courier, monospace;
+    background-color: transparent;
+    color: #00FFFF; /* Cyan */
+    border: 1px solid #00FFFF;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.ai-task-btn:hover {
+    background-color: #00FFFF;
+    color: #000;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
 }
 
 .project-completed-text {
@@ -634,6 +652,7 @@ main.archive-main {
 .progress-bar-inner,
 .delete-btn,
 .complete-btn,
+.ai-task-btn,
 #auth-container button,
 #project-stats,
 #archive-link-btn,
@@ -831,21 +850,21 @@ main,
 /* --- RESPONSIVE DASHBOARD --- */
 @media (max-width: 950px) {
     .dashboard-container {
-        flex-direction: column; /* Empile les éléments verticalement */
+        flex-direction: column; 
         gap: 30px;
-        align-items: center; /* Centre le contenu */
+        align-items: center; 
     }
 
     .left-sidebar {
-        width: 100%; /* Prend toute la largeur disponible */
-        max-width: 500px; /* Limite la largeur pour que le compagnon reste joli */
-        margin-top: 0; /* Enlève le décalage "alignement titre" du mode bureau */
-        order: 2; /* OPTIONNEL : Met le compagnon EN DESSOUS des projets */
+        width: 100%; 
+        max-width: 500px; 
+        margin-top: 0; 
+        order: 2; 
     }
 
     .right-content {
         width: 100%;
-        order: 1; /* Le contenu principal passe en premier */
+        order: 1; 
     }
 
     #companion-section {
@@ -857,23 +876,23 @@ main,
 @media (max-width: 700px) {
   #auth-container {
     height: auto;
-    flex-wrap: wrap; /* Permet aux éléments de passer à la ligne */
-    justify-content: space-between; /* Colle gauche et droite aux extrémités */
-    padding: 15px 10px; /* Réduit un peu le padding latéral */
+    flex-wrap: wrap; 
+    justify-content: space-between; 
+    padding: 15px 10px; 
   }
 
   #auth-left, #auth-right {
-    min-width: auto; /* Annule la largeur min de 150px qui bloquait */
-    width: auto;     /* Laisse la taille s'adapter au contenu */
-    margin-bottom: 10px; /* Ajoute un petit espace sous la ligne du haut */
+    min-width: auto; 
+    width: auto;     
+    margin-bottom: 10px; 
   }
 
   #auth-left {
-    order: 1; /* Compteur à gauche */
+    order: 1; 
   }
   
   #auth-right {
-    order: 2; /* Bouton à droite */
+    order: 2; 
   }
 
   #user-level-container {
@@ -897,11 +916,11 @@ main,
 /* --- STYLE DU POMODORO --- */
 #pomodoro-section {
     background-color: #000;
-    border: 2px solid #00ff00; /* Même vert que le compagnon */
+    border: 2px solid #00ff00; 
     padding: 25px 20px;
     text-align: center;
     box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-    margin-top: 20px; /* Espace entre le compagnon et le pomodoro */
+    margin-top: 20px; 
     
     display: flex;
     flex-direction: column;
@@ -911,15 +930,72 @@ main,
 
 #pomodoro-display {
     font-family: 'Pixelify Sans', monospace;
-    font-size: 3.5em; /* Gros affichage */
+    font-size: 3.5em; 
     color: #fff;
     font-weight: bold;
     text-shadow: 0 0 5px #fff;
     margin: 10px 0;
 }
 
-/* Petit effet quand le timer tourne */
 .timer-running #pomodoro-display {
     color: #00ff00;
     text-shadow: 0 0 10px #00ff00;
+}
+
+/* --- STYLE CHECKLIST IA --- */
+.ai-tasks-container {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #333;
+    text-align: left;
+}
+
+.ai-tasks-title {
+    font-size: 0.9em;
+    color: #00FFFF;
+    margin-bottom: 5px;
+    display: block;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #ccc;
+    cursor: pointer;
+}
+
+.task-checkbox {
+    appearance: none;
+    min-width: 16px;
+    height: 16px;
+    border: 1px solid #555;
+    background: #000;
+    cursor: pointer;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-checkbox:checked {
+    background: #00FFFF;
+    border-color: #00FFFF;
+}
+
+.task-checkbox:checked::after {
+    content: 'x';
+    color: #000;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.task-item.done span {
+    text-decoration: line-through;
+    color: #555;
 }

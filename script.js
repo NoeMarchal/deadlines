@@ -11,8 +11,7 @@ import {
     orderBy,
     where,
     getDoc,
-    setDoc,
-    getDocs
+    setDoc
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 import {
     getAuth,
@@ -28,13 +27,15 @@ const modalTitle = document.getElementById('modal-title');
 const modalText = document.getElementById('modal-text');
 const modalInput = document.getElementById('modal-input');
 const signupBtn = document.getElementById("signup-btn");
+const apiConfigBtn = document.getElementById("api-config-btn"); // Nouveau bouton
 const btnOk = document.getElementById('modal-btn-ok');
 const btnCancel = document.getElementById('modal-btn-cancel');
 
+// --- FONCTIONS MODALES ---
 function showCustomModal(type, message, placeholder = "") {
     return new Promise((resolve) => {
         if (!modalOverlay) {
-            alert(message); // Fallback si le HTML manque
+            alert(message); 
             return resolve(true);
         }
         modalOverlay.style.display = 'flex';
@@ -126,6 +127,71 @@ const PET_CONFIG = {
     ]
 };
 
+// --- LOGIQUE IA (GEMINI) ---
+let targetProjectIdForAI = null;
+const pdfInput = document.getElementById('pdf-upload-input');
+
+// Sauvegarder / Récupérer la clé API
+function getGeminiKey() {
+    return localStorage.getItem('GEMINI_API_KEY');
+}
+function setGeminiKey(key) {
+    localStorage.setItem('GEMINI_API_KEY', key);
+}
+
+// Extraction du texte depuis PDF (via pdf.js)
+async function extractTextFromPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    let fullText = "";
+    
+    // Lire max 5 premières pages pour ne pas exploser les tokens
+    const maxPages = Math.min(pdf.numPages, 5);
+    
+    for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(" ");
+        fullText += pageText + "\n";
+    }
+    return fullText;
+}
+
+// Appel à l'API Gemini
+async function generateTasksFromText(text) {
+    const apiKey = getGeminiKey();
+    if (!apiKey) throw new Error("Clé API manquante");
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
+    const prompt = `
+        Tu es un assistant de gestion de projet. Voici des consignes. 
+        Extrais une liste concrète de mini-tâches (max 8) pour réaliser ce projet.
+        Réponds UNIQUEMENT avec la liste brute, une tâche par ligne, sans numérotation, sans introduction.
+        
+        CONSIGNES : ${text.substring(0, 5000)}
+    `;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+        })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    
+    const rawText = data.candidates[0].content.parts[0].text;
+    
+    // Nettoyage de la réponse
+    return rawText.split('\n')
+        .map(line => line.replace(/^[\*\-\d\.]+\s*/, '').trim()) // Enlever puces/numéros
+        .filter(line => line.length > 2); // Garder lignes non vides
+}
+
+
 // --- DOM ELEMENTS ---
 const projectStatsDiv = document.getElementById("project-stats");
 const completedCountSpan = document.getElementById("completed-count");
@@ -156,6 +222,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentUser = null;
     let unsubscribeFromProjects = null;
+
+    // --- CONFIGURATION API KEY ---
+    if(apiConfigBtn) {
+        apiConfigBtn.addEventListener('click', async () => {
+            const currentKey = getGeminiKey() || "";
+            const newKey = await myPrompt("Entrez votre clé Google Gemini API (stockée localement) :", currentKey);
+            if (newKey !== false) { // Si pas annulé
+                setGeminiKey(newKey);
+                await myAlert("Clé enregistrée !");
+            }
+        });
+    }
+
+    // --- GESTION UPLOAD PDF POUR IA ---
+    if (pdfInput) {
+        pdfInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !targetProjectIdForAI) return;
+
+            try {
+                await myAlert("Analyse en cours... (Cela peut prendre quelques secondes)");
+                
+                // 1. Lire le PDF
+                const text = await extractTextFromPDF(file);
+                
+                // 2. Appeler Gemini
+                const tasks = await generateTasksFromText(text);
+                
+                // 3. Formater pour Firebase
+                const tasksObjects = tasks.map((t, index) => ({
+                    id: Date.now() + index,
+                    desc: t,
+                    done: false
+                }));
+
+                // 4. Sauvegarder dans le projet
+                const projectRef = doc(db, "projects", targetProjectIdForAI);
+                await updateDoc(projectRef, { aiTasks: tasksObjects });
+                
+                await myAlert(`Succès ! ${tasks.length} tâches générées.`);
+
+            } catch (error) {
+                console.error(error);
+                if(error.message.includes("Clé API")) {
+                    await myAlert("ERREUR: Configurez votre clé API (Bouton ⚙️ API) !");
+                } else {
+                    await myAlert("Erreur lors de l'analyse : " + error.message);
+                }
+            } finally {
+                // Reset input pour pouvoir réuploader le même fichier
+                pdfInput.value = '';
+                targetProjectIdForAI = null;
+            }
+        });
+    }
 
     // --- AUTHENTIFICATION ---
     loginBtn.addEventListener("click", () => {
@@ -214,6 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     end: end,
                     userId: currentUser.uid,
                     status: "pending",
+                    aiTasks: [] // Initialiser liste vide
                 });
                 projectForm.reset();
             } catch (error) {
@@ -267,6 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const today = new Date().getTime();
         const startDate = new Date(project.start).getTime();
         const endDate = new Date(project.end).getTime();
+        const aiTasks = project.aiTasks || []; // Liste des tâches IA
         
         if (isNaN(startDate) || isNaN(endDate)) return;
 
@@ -291,8 +414,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isUrgent) projectCard.classList.add("is-urgent");
         if (status === "completed") projectCard.classList.add("is-completed");
 
+        // Bouton IA (seulement si projet en cours)
+        const aiButtonHTML = status === "pending" 
+            ? `<button class="ai-task-btn" data-id="${projectId}">📄 IA Tasks</button>` 
+            : '';
+
         const projectActionsHTML = `
              <div class="project-actions">
+                 ${aiButtonHTML}
                  ${status === "pending"
                 ? `<button class="complete-btn" data-id="${projectId}">Terminer</button>`
                 : '<span class="project-completed-text">TERMINÉ</span>'
@@ -300,6 +429,24 @@ document.addEventListener("DOMContentLoaded", () => {
                  <button class="delete-btn" data-id="${projectId}">Supprimer</button>
              </div>
          `;
+         
+        // Construction de la Checklist IA
+        let tasksHTML = '';
+        if (aiTasks.length > 0) {
+            const tasksList = aiTasks.map(t => `
+                <div class="task-item ${t.done ? 'done' : ''}">
+                    <input type="checkbox" class="task-checkbox" data-pid="${projectId}" data-tid="${t.id}" ${t.done ? 'checked' : ''}>
+                    <span>${t.desc}</span>
+                </div>
+            `).join('');
+            
+            tasksHTML = `
+                <div class="ai-tasks-container">
+                    <span class="ai-tasks-title">Checklist IA :</span>
+                    ${tasksList}
+                </div>
+            `;
+        }
 
         const progressInnerClass = status === "completed" ? "is-completed" : "";
 
@@ -315,6 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
                      ${percentage}% 
                  </div> 
              </div> 
+             ${tasksHTML}
              ${projectActionsHTML}
          `;
         return projectCard;
@@ -322,26 +470,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if(projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
+            // Suppression
             if (e.target.classList.contains("delete-btn")) {
                 const idToDelete = e.target.getAttribute("data-id");
-                // CORRECTION ICI : Utilisation de myConfirm
                 const confirmed = await myConfirm("Supprimer ce projet ?");
                 if (!confirmed) return;
-                
                 try {
                     await deleteDoc(doc(db, "projects", idToDelete));
                 } catch (error) { console.error(error); }
             }
 
+            // Terminer
             if (e.target.classList.contains('complete-btn')) {
                 const idToComplete = e.target.getAttribute('data-id');
-                
                 try {
                     await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
                     if (currentUser) {
                         updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
                     }
                 } catch (error) { console.error(error); }
+            }
+            
+            // Upload PDF pour IA
+            if (e.target.classList.contains('ai-task-btn')) {
+                const pid = e.target.getAttribute('data-id');
+                // Vérifier si la clé est là
+                if (!getGeminiKey()) {
+                    await myAlert("Veuillez d'abord configurer votre clé API (Bouton ⚙️ API en haut).");
+                    return;
+                }
+                targetProjectIdForAI = pid;
+                if(pdfInput) pdfInput.click(); // Ouvrir sélecteur de fichier
+            }
+            
+            // Checkbox Task
+            if (e.target.classList.contains('task-checkbox')) {
+                const pid = e.target.getAttribute('data-pid');
+                const tid = parseFloat(e.target.getAttribute('data-tid'));
+                const isChecked = e.target.checked;
+                
+                // Mettre à jour Firebase
+                const projectRef = doc(db, "projects", pid);
+                const projectSnap = await getDoc(projectRef);
+                if (projectSnap.exists()) {
+                    let tasks = projectSnap.data().aiTasks || [];
+                    tasks = tasks.map(t => {
+                        if (t.id === tid) t.done = isChecked;
+                        return t;
+                    });
+                    await updateDoc(projectRef, { aiTasks: tasks });
+                }
             }
         });
     }
@@ -460,7 +638,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- GESTION DU POMODORO (NOUVEAU) ---
+    // --- GESTION DU POMODORO ---
     const pomoSection = document.getElementById('pomodoro-section');
     const pomoDisplay = document.getElementById('pomodoro-display');
     const pomoStartBtn = document.getElementById('pomo-start-btn');
@@ -475,7 +653,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const s = (pomoTimeLeft % 60).toString().padStart(2, '0');
         if(pomoDisplay) pomoDisplay.textContent = `${m}:${s}`;
         
-        // Change le titre de l'onglet pour voir le temps restant
         if(isPomoRunning) document.title = `${m}:${s} - Focus`;
         else document.title = "Mes Deadlines";
     }
@@ -505,10 +682,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         pomoSection.classList.remove('timer-running');
                         pomoStartBtn.textContent = "▶ START";
                         
-                        // Sonnerie ou Alerte
                         myAlert("🍅 SESSION TERMINÉE !\nPrends 5 minutes de pause.");
                         
-                        // Reset automatique après alerte
                         pomoTimeLeft = 25 * 60;
                         updatePomoDisplay();
                     }
@@ -535,9 +710,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if(projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
         if(projectStatsDiv) projectStatsDiv.style.display = "flex";
-        
-        // Afficher Pomodoro
         if(pomoSection) pomoSection.style.display = 'flex';
+        // Afficher bouton config
+        if(apiConfigBtn) apiConfigBtn.style.display = "inline-block";
     }
 
     function uiForLoggedOut() {
@@ -548,11 +723,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if(projectForm) projectForm.style.display = "none";
         if (addProjectBtn) addProjectBtn.disabled = true;
         if(projectStatsDiv) projectStatsDiv.style.display = "none";
-        
-        // Cacher Pomodoro
         if(pomoSection) pomoSection.style.display = 'none';
         
-        // Reset Pomodoro si l'utilisateur se déconnecte pendant un timer
+        if(apiConfigBtn) apiConfigBtn.style.display = "none";
+
         if(pomoTimer) {
              clearInterval(pomoTimer);
              isPomoRunning = false;
@@ -589,7 +763,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTopBarUI(newXP, newLevel, newCoins);
         
         if (xpGained > 0 || coinsGained > 0) {
-            // CORRECTION ICI : myAlert
             await myAlert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
         }
     }

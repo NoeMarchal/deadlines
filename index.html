@@ -7,9 +7,16 @@
     <title>Mes Deadlines</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="apple-touch-icon" href="Images/apple-icon.png" />
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
   </head>
 
   <body>
+    <input type="file" id="pdf-upload-input" accept="application/pdf" style="display: none;" />
+
     <div id="auth-container">
         <div id="auth-left">
             <div id="project-stats" style="display: none;">
@@ -31,6 +38,8 @@
 
         <div id="auth-right">
             <span id="user-details"></span>
+            <button id="api-config-btn" title="Configurer Clé IA">⚙️ API</button>
+            
             <button id="signup-btn">Créer un compte</button>
             <button id="login-btn">Se connecter</button>
             <button id="logout-btn" style="display: none;">Se déconnecter</button>
