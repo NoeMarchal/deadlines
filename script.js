@@ -22,7 +22,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
 
-// --- CONFIGURATION FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg",
     authDomain: "mes-deadlines.firebaseapp.com",
@@ -39,7 +38,6 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const projectsCollection = collection(db, "projects");
 
-// --- CONFIGURATION DU JEU ---
 const GAME_CONFIG = {
     xpReward: 500,
     coinReward: 700,
@@ -59,7 +57,7 @@ const PET_CONFIG = {
     ]
 };
 
-// --- SYSTÈME DE MODALES ---
+
 const modalOverlay = document.getElementById('custom-modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const modalText = document.getElementById('modal-text');
@@ -68,10 +66,10 @@ const modalInput = document.getElementById('modal-input');
 function showCustomModal(type, message, placeholder = "") {
     return new Promise((resolve) => {
         if (!modalOverlay) {
-            alert(message); 
+            alert(message);
             return resolve(true);
         }
-        
+
         const currentBtnOk = document.getElementById('modal-btn-ok');
         const currentBtnCancel = document.getElementById('modal-btn-cancel');
 
@@ -99,7 +97,7 @@ function showCustomModal(type, message, placeholder = "") {
 
         const newBtnOk = currentBtnOk.cloneNode(true);
         const newBtnCancel = currentBtnCancel.cloneNode(true);
-        
+
         currentBtnOk.parentNode.replaceChild(newBtnOk, currentBtnOk);
         currentBtnCancel.parentNode.replaceChild(newBtnCancel, currentBtnCancel);
 
@@ -113,11 +111,11 @@ function showCustomModal(type, message, placeholder = "") {
             modalOverlay.style.display = 'none';
             resolve(false);
         });
-        
-        if(type === 'prompt') {
-             modalInput.onkeydown = (e) => {
-                if(e.key === 'Enter') newBtnOk.click();
-             };
+
+        if (type === 'prompt') {
+            modalInput.onkeydown = (e) => {
+                if (e.key === 'Enter') newBtnOk.click();
+            };
         }
     });
 }
@@ -127,18 +125,16 @@ const myConfirm = (msg) => showCustomModal('confirm', msg);
 const myPrompt = (msg, place) => showCustomModal('prompt', msg, place);
 
 
-// --- LOGIQUE IA (GEMINI) & SPONSORING ---
+
 let targetProjectIdForAI = null;
 
 function getGeminiKey() {
-    // 1. Priorité : Clé personnelle de l'utilisateur
+
     const userKey = localStorage.getItem('GEMINI_API_KEY');
     if (userKey) {
-        return userKey; 
+        return userKey;
     } else {
-        // 2. Fallback : Clé "Cadeau" (Sponsoring)
-        // REMPLACE CECI PAR TA VRAIE CLÉ VALIDE (Celle qui supporte gemini-2.5-flash)
-        return "AIzaSyAr3pws_6yXgjp4PL8UOTyf-NAFo1yyhQk"; 
+        return "AIzaSyAr3pws_6yXgjp4PL8UOTyf-NAFo1yyhQk";
     }
 }
 
@@ -146,13 +142,12 @@ function setGeminiKey(key) {
     localStorage.setItem('GEMINI_API_KEY', key);
 }
 
-// Extraction du texte depuis PDF
 async function extractTextFromPDF(file) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
     let fullText = "";
     const maxPages = Math.min(pdf.numPages, 5);
-    
+
     for (let i = 1; i <= maxPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
@@ -162,15 +157,14 @@ async function extractTextFromPDF(file) {
     return fullText;
 }
 
-// Appel à l'API Gemini
 async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
 
-    // MODÈLE STABLE & RÉCENT
+
     const modelName = "gemini-2.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-    
+
     const prompt = `
         Tu es un assistant de gestion de projet expert.
         Analyse les consignes suivantes et extrais une liste d'actions concrètes (To-Do List).
@@ -193,12 +187,12 @@ async function generateTasksFromText(text) {
     });
 
     const data = await response.json();
-    
+
     if (data.error) {
         console.error("Erreur API Gemini:", data.error);
         throw new Error(`Erreur IA (${data.error.code}): ${data.error.message}`);
     }
-    
+
     if (!data.candidates || data.candidates.length === 0) {
         throw new Error("L'IA n'a renvoyé aucune réponse.");
     }
@@ -210,9 +204,9 @@ async function generateTasksFromText(text) {
 }
 
 
-// --- MAIN LOGIC ---
+
 document.addEventListener("DOMContentLoaded", () => {
-    // Éléments principaux
+
     const projectForm = document.getElementById("project-form");
     const pendingList = document.getElementById("pending-projects-list");
     const projectsGrid = document.getElementById("projects-container");
@@ -220,19 +214,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const startDateInput = document.getElementById("start-date");
     const endDateInput = document.getElementById("end-date");
     const addProjectBtn = document.getElementById("add-project-btn");
-    
-    // Auth & Navigation
+
+
     const loginBtn = document.getElementById("login-btn");
     const signupBtn = document.getElementById("signup-btn");
     const userDetails = document.getElementById("user-details");
-    
-    // Stats & UI
+
+
     const projectStatsDiv = document.getElementById("project-stats");
     const completedCountSpan = document.getElementById("completed-count");
     const totalCountSpan = document.getElementById("total-count");
     const userLevelContainer = document.getElementById('user-level-container');
-    
-    // Compagnon
+
+
     const companionSection = document.getElementById('companion-section');
     const petNameDisplay = document.getElementById('pet-name-display');
     const petLevelDisplay = document.getElementById('pet-level-display');
@@ -241,11 +235,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const petMessage = document.getElementById('pet-message');
     const feedBtn = document.getElementById('feed-btn');
     const renameBtn = document.getElementById('rename-btn');
-    
-    // IA
+
+
     const pdfInput = document.getElementById('pdf-upload-input');
 
-    // Réglages & Thèmes
+
     const settingsBtn = document.getElementById('settings-btn');
     const settingsOverlay = document.getElementById('settings-overlay');
     const closeSettingsBtn = document.getElementById('close-settings-btn');
@@ -253,8 +247,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const settingsApiKeyInput = document.getElementById('settings-api-key');
     const saveApiBtn = document.getElementById('save-api-btn');
     const logoutBtnSettings = document.getElementById('logout-btn-settings');
-    
-    // Aide
+
+
     const helpBtn = document.getElementById('help-btn');
     const helpOverlay = document.getElementById('help-modal-overlay');
     const closeHelpBtn = document.getElementById('close-help-btn');
@@ -262,17 +256,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentUser = null;
     let unsubscribeFromProjects = null;
 
-    // --- 1. INITIALISATION THÈME ---
+
     const currentTheme = localStorage.getItem('site_theme') || 'theme-retro';
     document.body.className = currentTheme;
-    if(themeSelector) themeSelector.value = currentTheme;
+    if (themeSelector) themeSelector.value = currentTheme;
 
-    // --- 2. LISTENERS RÉGLAGES ---
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
             settingsOverlay.style.display = 'flex';
             const key = localStorage.getItem('GEMINI_API_KEY');
-            if(key) settingsApiKeyInput.value = key;
+            if (key) settingsApiKeyInput.value = key;
         });
     }
 
@@ -307,26 +300,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 3. LISTENERS AIDE ---
+
     if (helpBtn && helpOverlay && closeHelpBtn) {
         helpBtn.addEventListener('click', () => { helpOverlay.style.display = 'flex'; });
         closeHelpBtn.addEventListener('click', () => { helpOverlay.style.display = 'none'; });
         helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) helpOverlay.style.display = 'none'; });
     }
 
-    // --- 4. GESTION UPLOAD PDF POUR IA ---
+
     if (pdfInput) {
         pdfInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            e.target.value = ''; 
-            
+            e.target.value = '';
+
             if (!file || !targetProjectIdForAI) return;
 
             try {
                 await myAlert("Analyse du document en cours...");
                 const text = await extractTextFromPDF(file);
                 const tasks = await generateTasksFromText(text);
-                
+
                 const tasksObjects = tasks.map((t, index) => ({
                     id: Date.now() + index,
                     desc: t,
@@ -335,15 +328,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const projectRef = doc(db, "projects", targetProjectIdForAI);
                 await updateDoc(projectRef, { aiTasks: tasksObjects });
-                
+
                 await myAlert(`Terminé ! ${tasks.length} tâches ajoutées.`);
 
             } catch (error) {
                 console.error(error);
-                if(error.message.includes("404") || error.message.includes("not found")) {
+                if (error.message.includes("404") || error.message.includes("not found")) {
                     await myAlert("Erreur Modèle IA : Modèle introuvable. Vérifiez la clé API.");
-                } else if(error.message.includes("API")) {
-                     await myAlert("Erreur API : " + error.message);
+                } else if (error.message.includes("API")) {
+                    await myAlert("Erreur API : " + error.message);
                 } else {
                     await myAlert("Erreur technique : " + error.message);
                 }
@@ -353,11 +346,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 5. AUTHENTIFICATION ---
-    if(loginBtn) loginBtn.addEventListener("click", () => signInWithPopup(auth, provider));
-    if(signupBtn) signupBtn.addEventListener("click", () => signInWithPopup(auth, provider));
-    
-    // Note: Le logout principal est maintenant géré dans les réglages (logoutBtnSettings)
+    if (loginBtn) loginBtn.addEventListener("click", () => signInWithPopup(auth, provider));
+    if (signupBtn) signupBtn.addEventListener("click", () => signInWithPopup(auth, provider));
+
+
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -365,7 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
             uiForLoggedIn(user);
             syncUserData(user);
             loadCompanion(user);
-            
+
             if (unsubscribeFromProjects) unsubscribeFromProjects();
             unsubscribeFromProjects = listenToProjects(user.uid);
         } else {
@@ -373,14 +365,13 @@ document.addEventListener("DOMContentLoaded", () => {
             uiForLoggedOut();
 
             if (unsubscribeFromProjects) unsubscribeFromProjects();
-            if(pendingList) pendingList.innerHTML = "<p>Veuillez vous connecter pour voir vos projets.</p>";
-            if(userLevelContainer) userLevelContainer.style.display = 'none';
-            if(companionSection) companionSection.style.display = 'none';
+            if (pendingList) pendingList.innerHTML = "<p>Veuillez vous connecter pour voir vos projets.</p>";
+            if (userLevelContainer) userLevelContainer.style.display = 'none';
+            if (companionSection) companionSection.style.display = 'none';
         }
     });
 
-    // --- 6. GESTION PROJETS ---
-    if(projectForm) {
+    if (projectForm) {
         projectForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             if (!currentUser) return;
@@ -401,7 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     end: end,
                     userId: currentUser.uid,
                     status: "pending",
-                    aiTasks: [] 
+                    aiTasks: []
                 });
                 projectForm.reset();
             } catch (error) { console.error(error); }
@@ -411,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function listenToProjects(userId) {
         const q = query(projectsCollection, where("userId", "==", userId), orderBy("end", "asc"));
         return onSnapshot(q, (snapshot) => {
-            if(pendingList) pendingList.innerHTML = "";
+            if (pendingList) pendingList.innerHTML = "";
             let pendingCount = 0;
             let completedCount = 0;
             let totalProjects = snapshot.size;
@@ -423,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (projectCard) {
                     if (status === 'completed') completedCount++;
                     else {
-                        if(pendingList) pendingList.appendChild(projectCard);
+                        if (pendingList) pendingList.appendChild(projectCard);
                         pendingCount++;
                     }
                 } else {
@@ -432,8 +423,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (pendingList && pendingCount === 0) pendingList.innerHTML = "<p>Aucun projet en cours.</p>";
-            if(completedCountSpan) completedCountSpan.textContent = completedCount;
-            if(totalCountSpan) totalCountSpan.textContent = totalProjects;
+            if (completedCountSpan) completedCountSpan.textContent = completedCount;
+            if (totalCountSpan) totalCountSpan.textContent = totalProjects;
         });
     }
 
@@ -444,8 +435,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const today = new Date().getTime();
         const startDate = new Date(project.start).getTime();
         const endDate = new Date(project.end).getTime();
-        const aiTasks = project.aiTasks || []; 
-        
+        const aiTasks = project.aiTasks || [];
+
         if (isNaN(startDate) || isNaN(endDate)) return;
 
         let percentage = 0;
@@ -468,20 +459,20 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isUrgent) projectCard.classList.add("is-urgent");
         if (status === "completed") projectCard.classList.add("is-completed");
 
-        const aiButtonHTML = status === "pending" 
+        const aiButtonHTML = status === "pending"
             ? `<button class="ai-task-btn" data-id="${projectId}">📄 IA Tasks</button>` : '';
 
         const projectActionsHTML = `
              <div class="project-actions">
                  ${aiButtonHTML}
                  ${status === "pending"
-                    ? `<button class="complete-btn" data-id="${projectId}">Terminer</button>`
-                    : '<span class="project-completed-text">TERMINÉ</span>'
-                 }
+                ? `<button class="complete-btn" data-id="${projectId}">Terminer</button>`
+                : '<span class="project-completed-text">TERMINÉ</span>'
+            }
                  <button class="delete-btn" data-id="${projectId}">Supprimer</button>
              </div>
          `;
-         
+
         let tasksHTML = '';
         if (aiTasks.length > 0) {
             const tasksList = aiTasks.map(t => `
@@ -513,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return projectCard;
     }
 
-    if(projectsGrid) {
+    if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
             if (e.target.classList.contains("delete-btn")) {
                 const idToDelete = e.target.getAttribute("data-id");
@@ -530,7 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (e.target.classList.contains('ai-task-btn')) {
                 targetProjectIdForAI = e.target.getAttribute('data-id');
-                if(pdfInput) pdfInput.click();
+                if (pdfInput) pdfInput.click();
             }
             if (e.target.classList.contains('task-checkbox')) {
                 const pid = e.target.getAttribute('data-pid');
@@ -547,18 +538,18 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 7. GESTION PET ---
+
     async function loadCompanion(user) {
-        if(!companionSection) return;
+        if (!companionSection) return;
         companionSection.style.display = 'block';
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
         let data = snap.data();
-        
+
         if (!data || !data.companion) {
             const initialCompanion = { name: "Glitch", level: 1, currentXp: 0, maxXp: 100 };
             await setDoc(userRef, { companion: initialCompanion }, { merge: true });
-            data = (await getDoc(userRef)).data(); 
+            data = (await getDoc(userRef)).data();
         }
         renderCompanion(data.companion);
     }
@@ -572,8 +563,8 @@ document.addEventListener("DOMContentLoaded", () => {
         let currentStage = PET_CONFIG.stages[0];
         for (let stage of PET_CONFIG.stages) { if (pet.level >= stage.minLvl) currentStage = stage; }
         petVisual.textContent = currentStage.art;
-        if(feedBtn) feedBtn.innerText = `⚡ Nourrir (${PET_CONFIG.costFeed} ₵)`;
-        if(renameBtn) renameBtn.innerText = `✎ Nom (${PET_CONFIG.costRename} ₵)`;
+        if (feedBtn) feedBtn.innerText = `⚡ Nourrir (${PET_CONFIG.costFeed} ₵)`;
+        if (renameBtn) renameBtn.innerText = `✎ Nom (${PET_CONFIG.costRename} ₵)`;
     }
 
     if (feedBtn) {
@@ -588,7 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let pet = data.companion;
             let newUserCoins = userCoins - PET_CONFIG.costFeed;
             pet.currentXp += PET_CONFIG.xpGain;
-            
+
             if (pet.currentXp >= pet.maxXp) {
                 pet.level++;
                 pet.currentXp = pet.currentXp - pet.maxXp;
@@ -612,7 +603,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!currentUser) return;
             const newName = await myPrompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`, "Ex: Glitch 2.0");
             if (!newName || newName.trim() === "") return;
-            
+
             const userRef = doc(db, "users", currentUser.uid);
             const snap = await getDoc(userRef);
             const data = snap.data();
@@ -628,7 +619,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 8. POMODORO ---
     const pomoSection = document.getElementById('pomodoro-section');
     const pomoDisplay = document.getElementById('pomodoro-display');
     const pomoStartBtn = document.getElementById('pomo-start-btn');
@@ -640,21 +630,21 @@ document.addEventListener("DOMContentLoaded", () => {
     function updatePomoDisplay() {
         const m = Math.floor(pomoTimeLeft / 60).toString().padStart(2, '0');
         const s = (pomoTimeLeft % 60).toString().padStart(2, '0');
-        if(pomoDisplay) pomoDisplay.textContent = `${m}:${s}`;
+        if (pomoDisplay) pomoDisplay.textContent = `${m}:${s}`;
         document.title = isPomoRunning ? `${m}:${s} - Focus` : "Mes Deadlines";
     }
 
-    if(pomoStartBtn) {
+    if (pomoStartBtn) {
         pomoStartBtn.addEventListener('click', () => {
             if (isPomoRunning) {
                 clearInterval(pomoTimer);
                 isPomoRunning = false;
                 pomoStartBtn.textContent = "▶ START";
-                if(pomoSection) pomoSection.classList.remove('timer-running');
+                if (pomoSection) pomoSection.classList.remove('timer-running');
             } else {
                 isPomoRunning = true;
                 pomoStartBtn.textContent = "❚❚ PAUSE";
-                if(pomoSection) pomoSection.classList.add('timer-running');
+                if (pomoSection) pomoSection.classList.add('timer-running');
                 pomoTimer = setInterval(() => {
                     if (pomoTimeLeft > 0) {
                         pomoTimeLeft--;
@@ -673,49 +663,48 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if(pomoResetBtn) {
+    if (pomoResetBtn) {
         pomoResetBtn.addEventListener('click', () => {
             clearInterval(pomoTimer);
             isPomoRunning = false;
             pomoTimeLeft = 25 * 60;
             updatePomoDisplay();
-            if(pomoStartBtn) pomoStartBtn.textContent = "▶ START";
-            if(pomoSection) pomoSection.classList.remove('timer-running');
+            if (pomoStartBtn) pomoStartBtn.textContent = "▶ START";
+            if (pomoSection) pomoSection.classList.remove('timer-running');
         });
     }
 
-    // --- 9. HELPERS UI ---
+
     function uiForLoggedIn(user) {
-        if(loginBtn) loginBtn.style.display = "none";
-        if(signupBtn) signupBtn.style.display = "none";
-        
-        // On affiche le bouton Réglages (où se trouve le logout maintenant)
-        if(settingsBtn) settingsBtn.style.display = "inline-block";
-        
-        if(projectForm) projectForm.style.display = "grid";
+        if (loginBtn) loginBtn.style.display = "none";
+        if (signupBtn) signupBtn.style.display = "none";
+
+
+        if (settingsBtn) settingsBtn.style.display = "inline-block";
+
+        if (projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
-        if(projectStatsDiv) projectStatsDiv.style.display = "flex";
-        if(pomoSection) pomoSection.style.display = 'flex';
+        if (projectStatsDiv) projectStatsDiv.style.display = "flex";
+        if (pomoSection) pomoSection.style.display = 'flex';
     }
 
     function uiForLoggedOut() {
-        if(loginBtn) loginBtn.style.display = "inline-block";
-        if(signupBtn) signupBtn.style.display = "inline-block";
-        
-        // On cache le bouton Réglages
-        if(settingsBtn) settingsBtn.style.display = "none";
-        
-        if(projectForm) projectForm.style.display = "none";
-        if (addProjectBtn) addProjectBtn.disabled = true;
-        if(projectStatsDiv) projectStatsDiv.style.display = "none";
-        if(pomoSection) pomoSection.style.display = 'none';
+        if (loginBtn) loginBtn.style.display = "inline-block";
+        if (signupBtn) signupBtn.style.display = "inline-block";
 
-        if(pomoTimer) {
-             clearInterval(pomoTimer);
-             isPomoRunning = false;
-             pomoTimeLeft = 25 * 60;
-             updatePomoDisplay();
-             if(pomoStartBtn) pomoStartBtn.textContent = "▶ START";
+        if (settingsBtn) settingsBtn.style.display = "none";
+
+        if (projectForm) projectForm.style.display = "none";
+        if (addProjectBtn) addProjectBtn.disabled = true;
+        if (projectStatsDiv) projectStatsDiv.style.display = "none";
+        if (pomoSection) pomoSection.style.display = 'none';
+
+        if (pomoTimer) {
+            clearInterval(pomoTimer);
+            isPomoRunning = false;
+            pomoTimeLeft = 25 * 60;
+            updatePomoDisplay();
+            if (pomoStartBtn) pomoStartBtn.textContent = "▶ START";
         }
     }
 
@@ -748,18 +737,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateTopBarUI(xp, level, coins) {
-        if(!userLevelContainer) return;
+        if (!userLevelContainer) return;
         const levelBadge = document.getElementById('level-badge');
         const xpBarFill = document.getElementById('xp-bar-fill');
         const xpText = document.getElementById('xp-text');
         const coinsDisplay = document.getElementById('user-coins');
-        
+
         userLevelContainer.style.display = 'flex';
         levelBadge.textContent = `LVL ${level}`;
         const currentLevelXp = xp % GAME_CONFIG.levelStep;
         xpText.textContent = `${currentLevelXp} / ${GAME_CONFIG.levelStep} XP`;
         const progress = (currentLevelXp) / GAME_CONFIG.levelStep * 100;
         xpBarFill.style.width = `${progress}%`;
-        if(coinsDisplay) coinsDisplay.textContent = `${coins} ₵`;
+        if (coinsDisplay) coinsDisplay.textContent = `${coins} ₵`;
     }
 });
