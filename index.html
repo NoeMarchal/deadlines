@@ -102,12 +102,23 @@
                 <section id="form-container">
                     <h2>Ajouter un projet</h2>
                     <form id="project-form">
-                        <input type="text" id="project-name" placeholder="Nom du projet" required />
+                        <input type="text" id="project-name" placeholder="MISSION (Nom du projet)" required />
+
+                        <select id="project-priority"
+                            style="grid-column: 1 / -1; padding: 10px; background: #111; color: #fff; border: 1px solid #555;">
+                            <option value="p1">🔴 CRITIQUE (Urgent + Important)</option>
+                            <option value="p2">🔵 STRATÉGIQUE (Important)</option>
+                            <option value="p3">🟡 SUPPORT (Urgent mais secondaire)</option>
+                            <option value="p4">⚪ SECONDAIRE (Ni urgent, ni important)</option>
+                        </select>
+
                         <label for="start-date">Début :</label>
                         <input type="date" id="start-date" required />
+
                         <label for="end-date">Fin :</label>
                         <input type="date" id="end-date" required />
-                        <button type="submit" id="add-project-btn" disabled>Ajouter</button>
+
+                        <button type="submit" id="add-project-btn" disabled>INITIALISER LA MISSION</button>
                     </form>
                 </section>
 

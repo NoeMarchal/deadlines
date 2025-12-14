@@ -21,7 +21,6 @@ import {
     onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
-
 const firebaseConfig = {
     apiKey: "AIzaSyDL9uGQAzor_sVUSi1l5sIsiAeEH0tFmCg",
     authDomain: "mes-deadlines.firebaseapp.com",
@@ -45,8 +44,8 @@ const GAME_CONFIG = {
 };
 
 const PET_CONFIG = {
-    costFeed: 50,
-    xpGain: 250,
+    costFeed: 5,
+    xpGain: 50,
     costRename: 50,
     stages: [
         { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
@@ -71,7 +70,6 @@ const PET_CONFIG = {
         { minLvl: 20, art: "E.R.R.O.R", name: "MissingNo" }
     ]
 };
-
 
 const modalOverlay = document.getElementById('custom-modal-overlay');
 const modalTitle = document.getElementById('modal-title');
@@ -139,12 +137,9 @@ const myAlert = (msg) => showCustomModal('alert', msg);
 const myConfirm = (msg) => showCustomModal('confirm', msg);
 const myPrompt = (msg, place) => showCustomModal('prompt', msg, place);
 
-
-
 let targetProjectIdForAI = null;
 
 function getGeminiKey() {
-
     const userKey = localStorage.getItem('GEMINI_API_KEY');
     if (userKey) {
         return userKey;
@@ -175,7 +170,6 @@ async function extractTextFromPDF(file) {
 async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
-
 
     const modelName = "gemini-2.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
@@ -218,10 +212,7 @@ async function generateTasksFromText(text) {
         .filter(line => line.length > 2);
 }
 
-
-
 document.addEventListener("DOMContentLoaded", () => {
-
     const projectForm = document.getElementById("project-form");
     const pendingList = document.getElementById("pending-projects-list");
     const projectsGrid = document.getElementById("projects-container");
@@ -230,17 +221,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const endDateInput = document.getElementById("end-date");
     const addProjectBtn = document.getElementById("add-project-btn");
 
-
     const loginBtn = document.getElementById("login-btn");
     const signupBtn = document.getElementById("signup-btn");
     const userDetails = document.getElementById("user-details");
-
 
     const projectStatsDiv = document.getElementById("project-stats");
     const completedCountSpan = document.getElementById("completed-count");
     const totalCountSpan = document.getElementById("total-count");
     const userLevelContainer = document.getElementById('user-level-container');
-
 
     const companionSection = document.getElementById('companion-section');
     const petNameDisplay = document.getElementById('pet-name-display');
@@ -251,9 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const feedBtn = document.getElementById('feed-btn');
     const renameBtn = document.getElementById('rename-btn');
 
-
     const pdfInput = document.getElementById('pdf-upload-input');
-
 
     const settingsBtn = document.getElementById('settings-btn');
     const settingsOverlay = document.getElementById('settings-overlay');
@@ -263,14 +249,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveApiBtn = document.getElementById('save-api-btn');
     const logoutBtnSettings = document.getElementById('logout-btn-settings');
 
-
     const helpBtn = document.getElementById('help-btn');
     const helpOverlay = document.getElementById('help-modal-overlay');
     const closeHelpBtn = document.getElementById('close-help-btn');
 
     let currentUser = null;
     let unsubscribeFromProjects = null;
-
 
     const currentTheme = localStorage.getItem('site_theme') || 'theme-retro';
     document.body.className = currentTheme;
@@ -315,13 +299,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     if (helpBtn && helpOverlay && closeHelpBtn) {
         helpBtn.addEventListener('click', () => { helpOverlay.style.display = 'flex'; });
         closeHelpBtn.addEventListener('click', () => { helpOverlay.style.display = 'none'; });
         helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) helpOverlay.style.display = 'none'; });
     }
-
 
     if (pdfInput) {
         pdfInput.addEventListener('change', async (e) => {
@@ -364,8 +346,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loginBtn) loginBtn.addEventListener("click", () => signInWithPopup(auth, provider));
     if (signupBtn) signupBtn.addEventListener("click", () => signInWithPopup(auth, provider));
 
-
-
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
@@ -394,6 +374,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const name = projectNameInput.value;
             const start = startDateInput.value;
             const end = endDateInput.value;
+            const priorityInput = document.getElementById("project-priority");
+            const priority = priorityInput ? priorityInput.value : "p4";
 
             if (new Date(start).getTime() >= new Date(end).getTime()) {
                 await myAlert("La date de fin doit être après la date de début !");
@@ -407,6 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     end: end,
                     userId: currentUser.uid,
                     status: "pending",
+                    priority: priority,
                     aiTasks: []
                 });
                 projectForm.reset();
@@ -427,8 +410,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const projectCard = renderProject(doc);
 
                 if (projectCard) {
-                    if (status === 'completed') completedCount++;
-                    else {
+                    if (status === 'completed') {
+                        completedCount++;
+                    } else {
                         if (pendingList) pendingList.appendChild(projectCard);
                         pendingCount++;
                     }
@@ -451,6 +435,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const startDate = new Date(project.start).getTime();
         const endDate = new Date(project.end).getTime();
         const aiTasks = project.aiTasks || [];
+        const priority = project.priority || "p4";
 
         if (isNaN(startDate) || isNaN(endDate)) return;
 
@@ -469,8 +454,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const remainingDays = (endDate - today) / msPerDay;
         const isUrgent = status === "pending" && percentage < 100 && remainingDays <= 3;
 
+        let priorityColor = "#555";
+        if (priority === "p1") priorityColor = "#ff0000";
+        if (priority === "p2") priorityColor = "#00FFFF";
+        if (priority === "p3") priorityColor = "#FFFF00";
+
         const projectCard = document.createElement("div");
         projectCard.className = "project-card";
+        projectCard.style.borderLeft = `5px solid ${priorityColor}`;
+
         if (isUrgent) projectCard.classList.add("is-urgent");
         if (status === "completed") projectCard.classList.add("is-completed");
 
@@ -552,7 +544,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
 
     async function loadCompanion(user) {
         if (!companionSection) return;
@@ -689,11 +680,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     function uiForLoggedIn(user) {
         if (loginBtn) loginBtn.style.display = "none";
         if (signupBtn) signupBtn.style.display = "none";
-
 
         if (settingsBtn) settingsBtn.style.display = "inline-block";
 
