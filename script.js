@@ -30,51 +30,53 @@ const signupBtn = document.getElementById("signup-btn");
 const apiConfigBtn = document.getElementById("api-config-btn");
 
 // --- FONCTIONS MODALES CORRIGÉES ---
-// Correction du bug "parentNode is null" en rechargeant les boutons à chaque appel
+// Cette version recharge les boutons à chaque appel pour éviter le crash "parentNode is null"
 function showCustomModal(type, message, placeholder = "") {
     return new Promise((resolve) => {
         if (!modalOverlay) {
-            alert(message); 
+            alert(message); // Fallback si le HTML manque
             return resolve(true);
         }
         
-        // On récupère les boutons "frais" du DOM à chaque fois
-        let btnOk = document.getElementById('modal-btn-ok');
-        let btnCancel = document.getElementById('modal-btn-cancel');
+        // 1. On récupère les boutons ACTUELS du DOM (très important !)
+        const currentBtnOk = document.getElementById('modal-btn-ok');
+        const currentBtnCancel = document.getElementById('modal-btn-cancel');
 
+        // 2. Configuration de l'affichage
         modalOverlay.style.display = 'flex';
         modalText.textContent = message;
         modalInput.value = "";
         
         modalInput.style.display = 'none';
-        btnCancel.style.display = 'none';
-        btnOk.textContent = "OK";
+        currentBtnCancel.style.display = 'none';
+        currentBtnOk.textContent = "OK";
 
         if (type === 'alert') {
             modalTitle.textContent = "MESSAGE SYSTÈME";
         } 
         else if (type === 'confirm') {
             modalTitle.textContent = "CONFIRMATION REQUISE";
-            btnCancel.style.display = 'block';
-            btnOk.textContent = "OUI";
+            currentBtnCancel.style.display = 'block';
+            currentBtnOk.textContent = "OUI";
         } 
         else if (type === 'prompt') {
             modalTitle.textContent = "SAISIE REQUISE";
             modalInput.style.display = 'block';
             modalInput.placeholder = placeholder;
             modalInput.focus();
-            btnCancel.style.display = 'block';
-            btnOk.textContent = "VALIDER";
+            currentBtnCancel.style.display = 'block';
+            currentBtnOk.textContent = "VALIDER";
         }
 
-        // On clone pour supprimer les anciens écouteurs d'événements
-        const newBtnOk = btnOk.cloneNode(true);
-        const newBtnCancel = btnCancel.cloneNode(true);
+        // 3. Clonage pour supprimer les anciens écouteurs (clean start)
+        const newBtnOk = currentBtnOk.cloneNode(true);
+        const newBtnCancel = currentBtnCancel.cloneNode(true);
         
-        // Remplacement sécurisé
-        btnOk.parentNode.replaceChild(newBtnOk, btnOk);
-        btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+        // 4. Remplacement sécurisé dans le DOM
+        currentBtnOk.parentNode.replaceChild(newBtnOk, currentBtnOk);
+        currentBtnCancel.parentNode.replaceChild(newBtnCancel, currentBtnCancel);
 
+        // 5. Ajout des nouveaux écouteurs
         newBtnOk.addEventListener('click', () => {
             modalOverlay.style.display = 'none';
             if (type === 'prompt') resolve(modalInput.value);
@@ -86,6 +88,7 @@ function showCustomModal(type, message, placeholder = "") {
             resolve(false);
         });
         
+        // Gestion de la touche Entrée pour le prompt
         if(type === 'prompt') {
              modalInput.onkeydown = (e) => {
                 if(e.key === 'Enter') newBtnOk.click();
@@ -169,15 +172,23 @@ async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
 
-    // CORRECTION ICI : Utilisation de gemini-1.5-flash-latest pour éviter l'erreur 404
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // CORRECTION MAJEURE ICI : Utilisation de la version '002' stable
+    const modelName = "gemini-1.5-flash-002"; 
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     
     const prompt = `
-        Tu es un assistant de gestion de projet. Voici des consignes. 
-        Extrais une liste concrète de mini-tâches (max 8) pour réaliser ce projet.
-        Réponds UNIQUEMENT avec la liste brute, une tâche par ligne, sans numérotation, sans introduction.
+        Tu es un assistant de gestion de projet expert.
+        Analyse les consignes suivantes et extrais une liste d'actions concrètes (To-Do List).
+        Génère entre 3 et 8 tâches maximum.
         
-        CONSIGNES : ${text.substring(0, 5000)}
+        RÈGLES STRICTES DE RÉPONSE :
+        1. Réponds UNIQUEMENT avec la liste des tâches.
+        2. Une tâche par ligne.
+        3. Pas de numéros, pas de tirets au début, juste le texte de la tâche.
+        4. Pas de phrase d'introduction comme "Voici la liste...".
+        
+        CONSIGNES DU PROJET : 
+        ${text.substring(0, 8000)}
     `;
 
     const response = await fetch(url, {
@@ -190,10 +201,10 @@ async function generateTasksFromText(text) {
 
     const data = await response.json();
     
-    // Gestion d'erreur améliorée
+    // Gestion d'erreur détaillée
     if (data.error) {
-        console.error("Erreur Gemini:", data.error);
-        throw new Error(data.error.message);
+        console.error("Erreur API Gemini:", data.error);
+        throw new Error(`Erreur IA (${data.error.code}): ${data.error.message}`);
     }
     
     if (!data.candidates || data.candidates.length === 0) {
@@ -244,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(apiConfigBtn) {
         apiConfigBtn.addEventListener('click', async () => {
             const currentKey = getGeminiKey() || "";
-            const newKey = await myPrompt("Entrez votre clé Google Gemini API (stockée localement) :", currentKey);
+            const newKey = await myPrompt("Clé Google Gemini API :", currentKey);
             if (newKey !== false) { // Si pas annulé
                 setGeminiKey(newKey);
                 await myAlert("Clé enregistrée !");
@@ -256,13 +267,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pdfInput) {
         pdfInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            // Reset input value pour permettre de réuploader le même fichier si besoin
-            e.target.value = ''; 
+            e.target.value = ''; // Reset pour permettre de réuploader le même fichier
             
             if (!file || !targetProjectIdForAI) return;
 
             try {
-                await myAlert("Analyse en cours... (Cela peut prendre quelques secondes)");
+                await myAlert("Analyse du document en cours...");
                 
                 // 1. Lire le PDF
                 const text = await extractTextFromPDF(file);
@@ -279,17 +289,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // 4. Sauvegarder dans le projet
                 const projectRef = doc(db, "projects", targetProjectIdForAI);
+                
+                // On récupère d'abord pour ne pas écraser les tâches existantes si on veut cumuler (optionnel, ici on remplace ou ajoute)
+                // Ici on remplace la liste 'aiTasks' par la nouvelle
                 await updateDoc(projectRef, { aiTasks: tasksObjects });
                 
-                await myAlert(`Succès ! ${tasks.length} tâches générées.`);
+                await myAlert(`Terminé ! ${tasks.length} tâches ont été ajoutées au projet.`);
 
             } catch (error) {
                 console.error(error);
-                if(error.message.includes("Clé API")) {
-                    await myAlert("ERREUR: Configurez votre clé API (Bouton ⚙️ API) !");
+                if(error.message.includes("404") || error.message.includes("not found")) {
+                    await myAlert("Erreur Modèle IA : Le modèle semble indisponible. Vérifiez votre clé API.");
+                } else if(error.message.includes("API")) {
+                     await myAlert("Erreur API : " + error.message);
                 } else {
-                    // On tronque le message s'il est trop long pour la modale
-                    await myAlert("Erreur : " + error.message.substring(0, 100));
+                    await myAlert("Erreur : Une erreur inconnue s'est produite.");
                 }
             } finally {
                 targetProjectIdForAI = null;
@@ -354,7 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     end: end,
                     userId: currentUser.uid,
                     status: "pending",
-                    aiTasks: [] // Initialiser liste vide
+                    aiTasks: [] 
                 });
                 projectForm.reset();
             } catch (error) {
@@ -408,7 +422,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const today = new Date().getTime();
         const startDate = new Date(project.start).getTime();
         const endDate = new Date(project.end).getTime();
-        const aiTasks = project.aiTasks || []; // Liste des tâches IA
+        const aiTasks = project.aiTasks || []; 
         
         if (isNaN(startDate) || isNaN(endDate)) return;
 
@@ -433,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isUrgent) projectCard.classList.add("is-urgent");
         if (status === "completed") projectCard.classList.add("is-completed");
 
-        // Bouton IA (seulement si projet en cours)
+        // Bouton IA
         const aiButtonHTML = status === "pending" 
             ? `<button class="ai-task-btn" data-id="${projectId}">📄 IA Tasks</button>` 
             : '';
@@ -544,7 +558,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- GESTION COMPAGNON (PET) ---
-
     async function loadCompanion(user) {
         if(!companionSection) return;
         companionSection.style.display = 'block';
@@ -629,7 +642,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renameBtn.addEventListener('click', async () => {
             if (!currentUser) return;
 
-            // CORRECTION ICI : myPrompt
             const newName = await myPrompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`, "Ex: Glitch 2.0");
             if (!newName || newName.trim() === "") return;
 
@@ -679,13 +691,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if(pomoStartBtn) {
         pomoStartBtn.addEventListener('click', () => {
             if (isPomoRunning) {
-                // Mettre en pause
                 clearInterval(pomoTimer);
                 isPomoRunning = false;
                 pomoStartBtn.textContent = "▶ START";
                 if(pomoSection) pomoSection.classList.remove('timer-running');
             } else {
-                // Démarrer
                 isPomoRunning = true;
                 pomoStartBtn.textContent = "❚❚ PAUSE";
                 if(pomoSection) pomoSection.classList.add('timer-running');
@@ -695,7 +705,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         pomoTimeLeft--;
                         updatePomoDisplay();
                     } else {
-                        // Timer terminé !
                         clearInterval(pomoTimer);
                         isPomoRunning = false;
                         pomoSection.classList.remove('timer-running');
