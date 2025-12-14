@@ -46,7 +46,7 @@ const GAME_CONFIG = {
 
 const PET_CONFIG = {
     costFeed: 5,
-    xpGain: 50,
+    xpGain: 250,
     costRename: 50,
     stages: [
         { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
