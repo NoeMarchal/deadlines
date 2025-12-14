@@ -873,43 +873,69 @@ main,
     }
 }
 
+/* --- HEADER MOBILE OPTIMISÉ --- */
 @media (max-width: 700px) {
+  
+  /* 1. Conteneur principal : On empile verticalement */
   #auth-container {
     height: auto;
-    flex-wrap: wrap; 
-    justify-content: space-between; 
-    padding: 15px 10px; 
+    flex-direction: column; /* Empile les éléments */
+    justify-content: center;
+    padding: 10px 5px; /* Réduit le padding latéral */
+    gap: 8px; /* Espace entre le niveau et les boutons */
   }
 
-  #auth-left, #auth-right {
-    min-width: auto; 
-    width: auto;     
-    margin-bottom: 10px; 
-  }
-
-  #auth-left {
-    order: 1; 
-  }
+  /* 2. On réorganise l'ordre d'affichage */
   
-  #auth-right {
-    order: 2; 
-  }
-
+  /* A. Le niveau (Badge LVL) passe tout en haut */
   #user-level-container {
-    order: 3;
+    position: static; /* Annule le positionnement absolu PC */
+    transform: none;
+    order: 1; /* Premier élément */
     width: 100%;
     justify-content: center;
-    position: static;
-    transform: none;
-    margin-top: 5px;
+    margin: 0;
   }
   
-  #user-details {
+  /* B. Les boutons passent en dessous */
+  #auth-right {
+    order: 2; /* Deuxième élément */
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap; /* Permet aux boutons de passer à la ligne si besoin */
+    gap: 8px; /* Espace entre les boutons */
+    min-width: auto;
+    margin: 0;
+  }
+
+  /* C. On CACHE les stats de projets (Trop encombrant sur mobile) */
+  #auth-left {
     display: none; 
   }
 
-  #xp-bar-bg {
+  /* 3. Design des boutons version Mobile (Plus petits) */
+  #auth-container button {
+    margin: 0; /* On gère l'espace avec gap sur le parent */
+    font-size: 0.75rem; /* Texte plus petit */
+    padding: 6px 10px;  /* Bouton moins gros */
+  }
+
+  /* 4. Ajustements visuels divers */
+  
+  /* Réduire la taille du gros titre "My Deadlines" */
+  header h1 {
+    font-size: 1.8em;
+    margin-top: 10px;
+  }
+
+  /* Cacher la barre d'XP et le texte XP (Garder juste le badge LVL) */
+  #xp-bar-bg, #xp-text {
     display: none;
+  }
+  
+  /* Ajustement spécifique pour les détails utilisateur (Email) */
+  #user-details {
+    display: none; /* On cache l'email sur mobile pour gagner de la place */
   }
 }
 
