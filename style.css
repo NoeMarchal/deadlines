@@ -841,21 +841,47 @@ main,
     }
 }
 
-/* Ajustements supplémentaires pour Mobiles (moins de 600px) */
-@media (max-width: 600px) {
-    /* On s'assure que le conteneur principal n'a pas trop de marge */
-    main {
-        margin: 20px auto;
-        padding: 0 10px;
-    }
+@media (max-width: 700px) {
+  #auth-container {
+    height: auto;
+    flex-wrap: wrap; /* Permet aux éléments de passer à la ligne */
+    justify-content: space-between; /* Colle gauche et droite aux extrémités */
+    padding: 15px 10px; /* Réduit un peu le padding latéral */
+  }
 
-    /* Le formulaire "Ajouter un projet" est déjà géré, mais on peut affiner */
-    #project-form button {
-        width: 100%; /* Bouton pleine largeur sur mobile, plus facile à cliquer */
-    }
+  /* --- C'est ici que la magie opère --- */
+  #auth-left, #auth-right {
+    min-width: auto; /* Annule la largeur min de 150px qui bloquait */
+    width: auto;     /* Laisse la taille s'adapter au contenu */
+    margin-bottom: 10px; /* Ajoute un petit espace sous la ligne du haut */
+  }
 
-    /* Adaptation des boutons du compagnon pour les petits écrans */
-    .pet-actions {
-        flex-direction: column; /* Boutons l'un sous l'autre si l'écran est très étroit */
-    }
+  /* Force l'ordre d'affichage */
+  #auth-left {
+    order: 1; /* Compteur à gauche */
+  }
+  
+  #auth-right {
+    order: 2; /* Bouton à droite */
+  }
+
+  /* Met le niveau et l'XP en dessous sur une nouvelle ligne */
+  #user-level-container {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    position: static;
+    transform: none;
+    margin-top: 5px;
+  }
+  
+  /* Masque les détails utilisateurs (email) sur mobile pour gagner de la place */
+  #user-details {
+    display: none; 
+  }
+
+  /* Masque la barre grise d'XP sur mobile, garde juste le texte */
+  #xp-bar-bg {
+    display: none;
+  }
 }
