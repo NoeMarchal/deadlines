@@ -528,22 +528,35 @@ document.addEventListener("DOMContentLoaded", () => {
         projectsGrid.addEventListener("click", async (e) => {
 
 
-            if (e.target.classList.contains('edit-btn')) {
-                const pid = e.target.getAttribute('data-id');
+// Checkbox Task (CORRIGÉ)
+            if (e.target.classList.contains('task-checkbox')) {
+                // 1. Récupération des données
+                const pid = e.target.getAttribute('data-pid');
+                const tid = parseFloat(e.target.getAttribute('data-tid'));
+                const isChecked = e.target.checked;
+                
+                // 2. MISE À JOUR VISUELLE IMMÉDIATE (Le fix est ici)
+                // On trouve le parent .task-item pour lui changer sa classe tout de suite
+                const taskItem = e.target.closest('.task-item');
+                if (taskItem) {
+                    if (isChecked) {
+                        taskItem.classList.add('done'); // Barre le texte
+                    } else {
+                        taskItem.classList.remove('done'); // Débarre le texte
+                    }
+                }
 
-                const docRef = doc(db, "projects", pid);
-                const snap = await getDoc(docRef);
-
-                if (snap.exists()) {
-                    const data = snap.data();
-
-                    editIdInput.value = pid;
-                    editNameInput.value = data.name;
-                    editStartInput.value = data.start;
-                    editEndInput.value = data.end;
-                    editPriorityInput.value = data.priority || 'p4';
-
-                    editOverlay.style.display = 'flex';
+                // 3. Mise à jour de la base de données (en arrière-plan)
+                const projectRef = doc(db, "projects", pid);
+                const projectSnap = await getDoc(projectRef);
+                
+                if (projectSnap.exists()) {
+                    let tasks = projectSnap.data().aiTasks || [];
+                    tasks = tasks.map(t => {
+                        if (t.id === tid) t.done = isChecked;
+                        return t;
+                    });
+                    await updateDoc(projectRef, { aiTasks: tasks });
                 }
             }
         });
