@@ -50,10 +50,25 @@ const PET_CONFIG = {
     costRename: 50,
     stages: [
         { minLvl: 1, art: "( ._. )", name: "Oeuf Glitché" },
-        { minLvl: 3, art: "[ o_o ]", name: "Robo-Bot" },
-        { minLvl: 5, art: "/( 0_0 )\\", name: "Cyber-Droïde" },
+        { minLvl: 2, art: "( o_o )", name: "Éclosion" },
+        { minLvl: 3, art: "[ o_o ]", name: "Robo-Bot v1" },
+        { minLvl: 4, art: "/[ o_o ]\\", name: "Walker-Bot" },
+        { minLvl: 5, art: "d[ 0_0 ]b", name: "Audio-Unit" },
+        { minLvl: 6, art: "/( 0_0 )\\", name: "Cyber-Droïde" },
+        { minLvl: 7, art: "ᕦ( ._. )ᕤ", name: "Gym-Bot" },
         { minLvl: 8, art: "ᕦ[ ▀_▀ ]ᕤ", name: "Mecha-Unit" },
-        { minLvl: 12, art: "<[ ☢_☢ ]>", name: "The Construct" }
+        { minLvl: 9, art: "⤜( ʘ_ʘ )⤏", name: "Hunter-X" },
+        { minLvl: 10, art: "︻デ═一", name: "Sniper-Code" },
+        { minLvl: 11, art: "( ⚔️_⚔️ )", name: "Warrior" },
+        { minLvl: 12, art: "<[ ☢_☢ ]>", name: "The Construct" },
+        { minLvl: 13, art: "【 ಠ_ಠ 】", name: "Sentinel" },
+        { minLvl: 14, art: "⚡( ⚡_⚡ )⚡", name: "Overload" },
+        { minLvl: 15, art: "꧁( ☠_☠ )꧂", name: "Reaper" },
+        { minLvl: 16, art: "★[ 👑 ]★", name: "King Glitch" },
+        { minLvl: 17, art: "[ ♾️_♾️ ]", name: "Singularity" },
+        { minLvl: 18, art: "( 👁️_👁️ )", name: "The Watcher" },
+        { minLvl: 19, art: "▀▄▀▄▀▄", name: "Pure Data" },
+        { minLvl: 20, art: "E.R.R.O.R", name: "MissingNo" }
     ]
 };
 
