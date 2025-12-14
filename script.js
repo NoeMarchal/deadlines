@@ -45,7 +45,7 @@ const GAME_CONFIG = {
 };
 
 const PET_CONFIG = {
-    costFeed: 5,
+    costFeed: 50,
     xpGain: 250,
     costRename: 50,
     stages: [
