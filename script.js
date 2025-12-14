@@ -253,6 +253,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const helpOverlay = document.getElementById('help-modal-overlay');
     const closeHelpBtn = document.getElementById('close-help-btn');
 
+    const editOverlay = document.getElementById('edit-project-overlay');
+    const editIdInput = document.getElementById('edit-project-id');
+    const editNameInput = document.getElementById('edit-project-name');
+    const editPriorityInput = document.getElementById('edit-project-priority');
+    const editStartInput = document.getElementById('edit-start-date');
+    const editEndInput = document.getElementById('edit-end-date');
+    const saveEditBtn = document.getElementById('save-edit-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
     let currentUser = null;
     let unsubscribeFromProjects = null;
 
@@ -468,10 +477,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const aiButtonHTML = status === "pending"
             ? `<button class="ai-task-btn" data-id="${projectId}">📄 IA Tasks</button>` : '';
+        const editButtonHTML = status === "pending"
+            ? `<button class="edit-btn" data-id="${projectId}">✎ Modifier</button>` : '';
 
         const projectActionsHTML = `
              <div class="project-actions">
                  ${aiButtonHTML}
+                 ${editButtonHTML} 
                  ${status === "pending"
                 ? `<button class="complete-btn" data-id="${projectId}">Terminer</button>`
                 : '<span class="project-completed-text">TERMINÉ</span>'
@@ -511,37 +523,70 @@ document.addEventListener("DOMContentLoaded", () => {
         return projectCard;
     }
 
+// --- GESTION DU CLIC SUR MODIFIER (dans projectsGrid) ---
     if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
-            if (e.target.classList.contains("delete-btn")) {
-                const idToDelete = e.target.getAttribute("data-id");
-                if (await myConfirm("Supprimer ce projet ?")) {
-                    try { await deleteDoc(doc(db, "projects", idToDelete)); } catch (err) { console.error(err); }
+            // ... tes autres ifs (delete, complete, ai-task) ...
+
+            // 1. CLIC SUR MODIFIER
+            if (e.target.classList.contains('edit-btn')) {
+                const pid = e.target.getAttribute('data-id');
+                // On récupère les infos actuelles
+                const docRef = doc(db, "projects", pid);
+                const snap = await getDoc(docRef);
+                
+                if(snap.exists()){
+                    const data = snap.data();
+                    // On remplit la modale
+                    editIdInput.value = pid;
+                    editNameInput.value = data.name;
+                    editStartInput.value = data.start;
+                    editEndInput.value = data.end;
+                    editPriorityInput.value = data.priority || 'p4';
+                    
+                    // On affiche
+                    editOverlay.style.display = 'flex';
                 }
             }
-            if (e.target.classList.contains('complete-btn')) {
-                const idToComplete = e.target.getAttribute('data-id');
-                try {
-                    await updateDoc(doc(db, 'projects', idToComplete), { status: 'completed' });
-                    if (currentUser) updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
-                } catch (err) { console.error(err); }
+        });
+    }
+
+    // --- GESTION DES BOUTONS DE LA MODALE ---
+    if(saveEditBtn) {
+        saveEditBtn.addEventListener('click', async () => {
+            const pid = editIdInput.value;
+            const name = editNameInput.value;
+            const start = editStartInput.value;
+            const end = editEndInput.value;
+            const priority = editPriorityInput.value;
+
+            if (new Date(start).getTime() >= new Date(end).getTime()) {
+                await myAlert("La date de fin doit être après la date de début !");
+                return;
             }
-            if (e.target.classList.contains('ai-task-btn')) {
-                targetProjectIdForAI = e.target.getAttribute('data-id');
-                if (pdfInput) pdfInput.click();
+
+            try {
+                // Mise à jour Firebase
+                const docRef = doc(db, "projects", pid);
+                await updateDoc(docRef, {
+                    name: name,
+                    start: start,
+                    end: end,
+                    priority: priority
+                });
+                
+                editOverlay.style.display = 'none';
+                await myAlert("Mission mise à jour !");
+            } catch (error) {
+                console.error(error);
+                await myAlert("Erreur lors de la modification.");
             }
-            if (e.target.classList.contains('task-checkbox')) {
-                const pid = e.target.getAttribute('data-pid');
-                const tid = parseFloat(e.target.getAttribute('data-tid'));
-                const isChecked = e.target.checked;
-                const projectRef = doc(db, "projects", pid);
-                const projectSnap = await getDoc(projectRef);
-                if (projectSnap.exists()) {
-                    let tasks = projectSnap.data().aiTasks || [];
-                    tasks = tasks.map(t => { if (t.id === tid) t.done = isChecked; return t; });
-                    await updateDoc(projectRef, { aiTasks: tasks });
-                }
-            }
+        });
+    }
+
+    if(cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', () => {
+            editOverlay.style.display = 'none';
         });
     }
 
