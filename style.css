@@ -828,9 +828,7 @@ main,
     gap: 15px;
 }
 
-/* --- RESPONSIVE DASHBOARD (Ajouter à la fin du fichier style.css) --- */
-
-/* Pour les tablettes et petits écrans (moins de 950px) */
+/* --- RESPONSIVE DASHBOARD --- */
 @media (max-width: 950px) {
     .dashboard-container {
         flex-direction: column; /* Empile les éléments verticalement */
@@ -842,7 +840,7 @@ main,
         width: 100%; /* Prend toute la largeur disponible */
         max-width: 500px; /* Limite la largeur pour que le compagnon reste joli */
         margin-top: 0; /* Enlève le décalage "alignement titre" du mode bureau */
-        order: 2; /* OPTIONNEL : Met le compagnon EN DESSOUS des projets sur mobile. Enlève cette ligne si tu le veux au-dessus. */
+        order: 2; /* OPTIONNEL : Met le compagnon EN DESSOUS des projets */
     }
 
     .right-content {
@@ -850,10 +848,9 @@ main,
         order: 1; /* Le contenu principal passe en premier */
     }
 
-    /* Ajustement du compagnon pour qu'il prenne bien la place */
     #companion-section {
         width: 100%; 
-        box-sizing: border-box; /* Important pour que le padding ne dépasse pas */
+        box-sizing: border-box;
     }
 }
 
@@ -865,14 +862,12 @@ main,
     padding: 15px 10px; /* Réduit un peu le padding latéral */
   }
 
-  /* --- C'est ici que la magie opère --- */
   #auth-left, #auth-right {
     min-width: auto; /* Annule la largeur min de 150px qui bloquait */
     width: auto;     /* Laisse la taille s'adapter au contenu */
     margin-bottom: 10px; /* Ajoute un petit espace sous la ligne du haut */
   }
 
-  /* Force l'ordre d'affichage */
   #auth-left {
     order: 1; /* Compteur à gauche */
   }
@@ -881,7 +876,6 @@ main,
     order: 2; /* Bouton à droite */
   }
 
-  /* Met le niveau et l'XP en dessous sur une nouvelle ligne */
   #user-level-container {
     order: 3;
     width: 100%;
@@ -891,13 +885,41 @@ main,
     margin-top: 5px;
   }
   
-  /* Masque les détails utilisateurs (email) sur mobile pour gagner de la place */
   #user-details {
     display: none; 
   }
 
-  /* Masque la barre grise d'XP sur mobile, garde juste le texte */
   #xp-bar-bg {
     display: none;
   }
+}
+
+/* --- STYLE DU POMODORO --- */
+#pomodoro-section {
+    background-color: #000;
+    border: 2px solid #00ff00; /* Même vert que le compagnon */
+    padding: 25px 20px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    margin-top: 20px; /* Espace entre le compagnon et le pomodoro */
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+#pomodoro-display {
+    font-family: 'Pixelify Sans', monospace;
+    font-size: 3.5em; /* Gros affichage */
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0 5px #fff;
+    margin: 10px 0;
+}
+
+/* Petit effet quand le timer tourne */
+.timer-running #pomodoro-display {
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
 }

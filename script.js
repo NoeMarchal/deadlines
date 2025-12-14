@@ -166,11 +166,11 @@ document.addEventListener("DOMContentLoaded", () => {
         signOut(auth).catch((error) => console.error(error));
     });
 
-if(signupBtn) {
-    signupBtn.addEventListener("click", () => {
-        signInWithPopup(auth, provider).catch((error) => console.error(error));
-    });
-}
+    if(signupBtn) {
+        signupBtn.addEventListener("click", () => {
+            signInWithPopup(auth, provider).catch((error) => console.error(error));
+        });
+    }
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -460,6 +460,74 @@ if(signupBtn) {
         });
     }
 
+    // --- GESTION DU POMODORO (NOUVEAU) ---
+    const pomoSection = document.getElementById('pomodoro-section');
+    const pomoDisplay = document.getElementById('pomodoro-display');
+    const pomoStartBtn = document.getElementById('pomo-start-btn');
+    const pomoResetBtn = document.getElementById('pomo-reset-btn');
+
+    let pomoTimer = null;
+    let pomoTimeLeft = 25 * 60; // 25 minutes en secondes
+    let isPomoRunning = false;
+
+    function updatePomoDisplay() {
+        const m = Math.floor(pomoTimeLeft / 60).toString().padStart(2, '0');
+        const s = (pomoTimeLeft % 60).toString().padStart(2, '0');
+        if(pomoDisplay) pomoDisplay.textContent = `${m}:${s}`;
+        
+        // Change le titre de l'onglet pour voir le temps restant
+        if(isPomoRunning) document.title = `${m}:${s} - Focus`;
+        else document.title = "Mes Deadlines";
+    }
+
+    if(pomoStartBtn) {
+        pomoStartBtn.addEventListener('click', () => {
+            if (isPomoRunning) {
+                // Mettre en pause
+                clearInterval(pomoTimer);
+                isPomoRunning = false;
+                pomoStartBtn.textContent = "▶ START";
+                if(pomoSection) pomoSection.classList.remove('timer-running');
+            } else {
+                // Démarrer
+                isPomoRunning = true;
+                pomoStartBtn.textContent = "❚❚ PAUSE";
+                if(pomoSection) pomoSection.classList.add('timer-running');
+                
+                pomoTimer = setInterval(() => {
+                    if (pomoTimeLeft > 0) {
+                        pomoTimeLeft--;
+                        updatePomoDisplay();
+                    } else {
+                        // Timer terminé !
+                        clearInterval(pomoTimer);
+                        isPomoRunning = false;
+                        pomoSection.classList.remove('timer-running');
+                        pomoStartBtn.textContent = "▶ START";
+                        
+                        // Sonnerie ou Alerte
+                        myAlert("🍅 SESSION TERMINÉE !\nPrends 5 minutes de pause.");
+                        
+                        // Reset automatique après alerte
+                        pomoTimeLeft = 25 * 60;
+                        updatePomoDisplay();
+                    }
+                }, 1000);
+            }
+        });
+    }
+
+    if(pomoResetBtn) {
+        pomoResetBtn.addEventListener('click', () => {
+            clearInterval(pomoTimer);
+            isPomoRunning = false;
+            pomoTimeLeft = 25 * 60;
+            updatePomoDisplay();
+            if(pomoStartBtn) pomoStartBtn.textContent = "▶ START";
+            if(pomoSection) pomoSection.classList.remove('timer-running');
+        });
+    }
+
     function uiForLoggedIn(user) {
         loginBtn.style.display = "none";
         if(signupBtn) signupBtn.style.display = "none";
@@ -467,6 +535,9 @@ if(signupBtn) {
         if(projectForm) projectForm.style.display = "grid";
         if (addProjectBtn) addProjectBtn.disabled = false;
         if(projectStatsDiv) projectStatsDiv.style.display = "flex";
+        
+        // Afficher Pomodoro
+        if(pomoSection) pomoSection.style.display = 'flex';
     }
 
     function uiForLoggedOut() {
@@ -477,6 +548,18 @@ if(signupBtn) {
         if(projectForm) projectForm.style.display = "none";
         if (addProjectBtn) addProjectBtn.disabled = true;
         if(projectStatsDiv) projectStatsDiv.style.display = "none";
+        
+        // Cacher Pomodoro
+        if(pomoSection) pomoSection.style.display = 'none';
+        
+        // Reset Pomodoro si l'utilisateur se déconnecte pendant un timer
+        if(pomoTimer) {
+             clearInterval(pomoTimer);
+             isPomoRunning = false;
+             pomoTimeLeft = 25 * 60;
+             updatePomoDisplay();
+             if(pomoStartBtn) pomoStartBtn.textContent = "▶ START";
+        }
     }
 
     async function updateUserStats(user, xpGained = 0, coinsGained = 0) {

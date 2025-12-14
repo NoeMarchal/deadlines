@@ -11,40 +11,32 @@
 
   <body>
     <div id="auth-container">
-      <div id="project-stats" style="display: none">
-        <span id="completed-count">0</span> /
-        <span id="total-count">0</span> PROJETS
-      </div>
+        <div id="auth-left">
+            <div id="project-stats" style="display: none;">
+                <span id="completed-count">0</span> / <span id="total-count">0</span> PROJETS
+            </div>
+        </div>
 
-<div id="auth-container">
-    <div id="auth-left">
-        <div id="project-stats" style="display: none;">
-            <span id="completed-count">0</span> / <span id="total-count">0</span> PROJETS
+        <div id="user-level-container" style="display: none;">
+            <span id="level-badge">LVL 1</span>
+            <div id="xp-bar-bg">
+                <div id="xp-bar-fill"></div>
+            </div>
+            <span id="xp-text">0 / 1300 XP</span>
+            
+            <span id="user-coins" style="color: #00ff00; margin-left: 15px; font-weight: bold; border: 1px solid #00ff00; padding: 2px 5px;">
+                0 ₵
+            </span>
+        </div>
+
+        <div id="auth-right">
+            <span id="user-details"></span>
+            <button id="signup-btn">Créer un compte</button>
+            <button id="login-btn">Se connecter</button>
+            <button id="logout-btn" style="display: none;">Se déconnecter</button>
         </div>
     </div>
 
-<div id="user-level-container" style="display: none;">
-    <span id="level-badge">LVL 1</span>
-    <div id="xp-bar-bg">
-        <div id="xp-bar-fill"></div>
-    </div>
-    <span id="xp-text">0 / 1300 XP</span>
-    
-    <span id="user-coins" style="color: #00ff00; margin-left: 15px; font-weight: bold; border: 1px solid #00ff00; padding: 2px 5px;">
-        0 ₵
-    </span>
-</div>
-
-<div id="auth-right">
-    <span id="user-details"></span>
-    <button id="signup-btn">Créer un compte</button>
-    <button id="login-btn">Se connecter</button>
-    <button id="logout-btn" style="display: none;">Se déconnecter</button>
-</div>
-</div>
-
-</div>
-    </div>
     <header>
       <h1>My Deadlines</h1>
     </header>
@@ -77,6 +69,20 @@
                 
                 <div id="pet-message">En attente...</div>
             </section>
+
+            <section id="pomodoro-section" class="project-card" style="display:none;">
+                <div class="companion-header">
+                    <h2>FOCUS TIMER</h2>
+                </div>
+                
+                <div id="pomodoro-display">25:00</div>
+                
+                <div class="pet-actions">
+                    <button id="pomo-start-btn" class="pet-btn">▶ START</button>
+                    <button id="pomo-reset-btn" class="pet-btn" style="color: #ff0000; border-color: #ff0000;">↺ RESET</button>
+                </div>
+            </section>
+
         </aside>
 
         <div class="right-content">
@@ -109,7 +115,9 @@
             </section>
         </div>
     </div>
-</main><footer>
+</main>
+    
+    <footer>
       <div id="footer-content">
         <span>&copy; 2025 Moust4ki</span>
 
@@ -121,16 +129,17 @@
 
     <script src="script.js" type="module"></script>
     <div id="custom-modal-overlay" style="display: none;">
-    <div id="custom-modal-box">
-        <h3 id="modal-title">SYSTEM MESSAGE</h3>
-        <p id="modal-text">...</p>
-        
-        <input type="text" id="modal-input" style="display: none;" placeholder="Saisir ici..." autocomplete="off">
-        
-        <div class="modal-buttons">
-            <button id="modal-btn-cancel" class="pet-btn" style="border-color: #ff0000; color: #ff0000;">ANNULER</button>
-            <button id="modal-btn-ok" class="pet-btn">CONFIRMER</button>
+        <div id="custom-modal-box">
+            <h3 id="modal-title">SYSTEM MESSAGE</h3>
+            <p id="modal-text">...</p>
+            
+            <input type="text" id="modal-input" style="display: none;" placeholder="Saisir ici..." autocomplete="off">
+            
+            <div class="modal-buttons">
+                <button id="modal-btn-cancel" class="pet-btn" style="border-color: #ff0000; color: #ff0000;">ANNULER</button>
+                <button id="modal-btn-ok" class="pet-btn">CONFIRMER</button>
+            </div>
         </div>
     </div>
-</div>
-  </body> </html>
+  </body> 
+</html>
