@@ -523,36 +523,34 @@ document.addEventListener("DOMContentLoaded", () => {
         return projectCard;
     }
 
-// --- GESTION DU CLIC SUR MODIFIER (dans projectsGrid) ---
+
     if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
-            // ... tes autres ifs (delete, complete, ai-task) ...
 
-            // 1. CLIC SUR MODIFIER
+
             if (e.target.classList.contains('edit-btn')) {
                 const pid = e.target.getAttribute('data-id');
-                // On récupère les infos actuelles
+
                 const docRef = doc(db, "projects", pid);
                 const snap = await getDoc(docRef);
-                
-                if(snap.exists()){
+
+                if (snap.exists()) {
                     const data = snap.data();
-                    // On remplit la modale
+
                     editIdInput.value = pid;
                     editNameInput.value = data.name;
                     editStartInput.value = data.start;
                     editEndInput.value = data.end;
                     editPriorityInput.value = data.priority || 'p4';
-                    
-                    // On affiche
+
                     editOverlay.style.display = 'flex';
                 }
             }
         });
     }
 
-    // --- GESTION DES BOUTONS DE LA MODALE ---
-    if(saveEditBtn) {
+
+    if (saveEditBtn) {
         saveEditBtn.addEventListener('click', async () => {
             const pid = editIdInput.value;
             const name = editNameInput.value;
@@ -566,7 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             try {
-                // Mise à jour Firebase
+
                 const docRef = doc(db, "projects", pid);
                 await updateDoc(docRef, {
                     name: name,
@@ -574,7 +572,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     end: end,
                     priority: priority
                 });
-                
+
                 editOverlay.style.display = 'none';
                 await myAlert("Mission mise à jour !");
             } catch (error) {
@@ -584,7 +582,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if(cancelEditBtn) {
+    if (cancelEditBtn) {
         cancelEditBtn.addEventListener('click', () => {
             editOverlay.style.display = 'none';
         });

@@ -236,33 +236,35 @@
         </div>
     </div>
     <div id="edit-project-overlay" style="display: none;">
-    <div id="edit-project-box">
-        <h3>MODIFIER LA MISSION</h3>
-        <input type="hidden" id="edit-project-id">
-        
-        <label>Nom de la mission :</label>
-        <input type="text" id="edit-project-name" placeholder="Nom du projet">
-        
-        <label>Niveau de Priorité :</label>
-        <select id="edit-project-priority">
-            <option value="p1">🔴 CRITIQUE (Urgent + Important)</option>
-            <option value="p2">🔵 STRATÉGIQUE (Important)</option>
-            <option value="p3">🟡 SUPPORT (Urgent mais secondaire)</option>
-            <option value="p4">⚪ SECONDAIRE (Ni urgent, ni important)</option>
-        </select>
+        <div id="edit-project-box">
+            <h3>MODIFIER LA MISSION</h3>
+            <input type="hidden" id="edit-project-id">
 
-        <label>Date de Début :</label>
-        <input type="date" id="edit-start-date">
-        
-        <label>Date de Fin :</label>
-        <input type="date" id="edit-end-date">
+            <label>Nom de la mission :</label>
+            <input type="text" id="edit-project-name" placeholder="Nom du projet">
 
-        <div class="modal-buttons" style="margin-top: 20px;">
-            <button id="cancel-edit-btn" class="pet-btn" style="border-color: #ff0000; color: #ff0000;">ANNULER</button>
-            <button id="save-edit-btn" class="pet-btn" style="border-color: #00ff00; color: #00ff00;">SAUVEGARDER</button>
+            <label>Niveau de Priorité :</label>
+            <select id="edit-project-priority">
+                <option value="p1">🔴 CRITIQUE (Urgent + Important)</option>
+                <option value="p2">🔵 STRATÉGIQUE (Important)</option>
+                <option value="p3">🟡 SUPPORT (Urgent mais secondaire)</option>
+                <option value="p4">⚪ SECONDAIRE (Ni urgent, ni important)</option>
+            </select>
+
+            <label>Date de Début :</label>
+            <input type="date" id="edit-start-date">
+
+            <label>Date de Fin :</label>
+            <input type="date" id="edit-end-date">
+
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button id="cancel-edit-btn" class="pet-btn"
+                    style="border-color: #ff0000; color: #ff0000;">ANNULER</button>
+                <button id="save-edit-btn" class="pet-btn"
+                    style="border-color: #00ff00; color: #00ff00;">SAUVEGARDER</button>
+            </div>
         </div>
     </div>
-</div>
 </body>
 
 </html>
