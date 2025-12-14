@@ -302,9 +302,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     await myAlert("Erreur Modèle IA : Le modèle semble indisponible. Vérifiez votre clé API.");
                 } else if(error.message.includes("API")) {
                      await myAlert("Erreur API : " + error.message);
-                } else {
-                    await myAlert("Erreur : Une erreur inconnue s'est produite.");
-                }
+} else {
+    // Affiche le vrai message technique pour comprendre
+    await myAlert("Erreur technique : " + error.message);
+}
             } finally {
                 targetProjectIdForAI = null;
             }
