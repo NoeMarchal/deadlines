@@ -27,17 +27,21 @@ const modalTitle = document.getElementById('modal-title');
 const modalText = document.getElementById('modal-text');
 const modalInput = document.getElementById('modal-input');
 const signupBtn = document.getElementById("signup-btn");
-const apiConfigBtn = document.getElementById("api-config-btn"); // Nouveau bouton
-const btnOk = document.getElementById('modal-btn-ok');
-const btnCancel = document.getElementById('modal-btn-cancel');
+const apiConfigBtn = document.getElementById("api-config-btn");
 
-// --- FONCTIONS MODALES ---
+// --- FONCTIONS MODALES CORRIGÉES ---
+// Correction du bug "parentNode is null" en rechargeant les boutons à chaque appel
 function showCustomModal(type, message, placeholder = "") {
     return new Promise((resolve) => {
         if (!modalOverlay) {
             alert(message); 
             return resolve(true);
         }
+        
+        // On récupère les boutons "frais" du DOM à chaque fois
+        let btnOk = document.getElementById('modal-btn-ok');
+        let btnCancel = document.getElementById('modal-btn-cancel');
+
         modalOverlay.style.display = 'flex';
         modalText.textContent = message;
         modalInput.value = "";
@@ -63,8 +67,11 @@ function showCustomModal(type, message, placeholder = "") {
             btnOk.textContent = "VALIDER";
         }
 
+        // On clone pour supprimer les anciens écouteurs d'événements
         const newBtnOk = btnOk.cloneNode(true);
         const newBtnCancel = btnCancel.cloneNode(true);
+        
+        // Remplacement sécurisé
         btnOk.parentNode.replaceChild(newBtnOk, btnOk);
         btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
 
@@ -162,7 +169,8 @@ async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // CORRECTION ICI : Utilisation de gemini-1.5-flash-latest pour éviter l'erreur 404
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     
     const prompt = `
         Tu es un assistant de gestion de projet. Voici des consignes. 
@@ -181,8 +189,17 @@ async function generateTasksFromText(text) {
     });
 
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
     
+    // Gestion d'erreur améliorée
+    if (data.error) {
+        console.error("Erreur Gemini:", data.error);
+        throw new Error(data.error.message);
+    }
+    
+    if (!data.candidates || data.candidates.length === 0) {
+        throw new Error("L'IA n'a renvoyé aucune réponse.");
+    }
+
     const rawText = data.candidates[0].content.parts[0].text;
     
     // Nettoyage de la réponse
@@ -239,6 +256,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pdfInput) {
         pdfInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
+            // Reset input value pour permettre de réuploader le même fichier si besoin
+            e.target.value = ''; 
+            
             if (!file || !targetProjectIdForAI) return;
 
             try {
@@ -268,11 +288,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 if(error.message.includes("Clé API")) {
                     await myAlert("ERREUR: Configurez votre clé API (Bouton ⚙️ API) !");
                 } else {
-                    await myAlert("Erreur lors de l'analyse : " + error.message);
+                    // On tronque le message s'il est trop long pour la modale
+                    await myAlert("Erreur : " + error.message.substring(0, 100));
                 }
             } finally {
-                // Reset input pour pouvoir réuploader le même fichier
-                pdfInput.value = '';
                 targetProjectIdForAI = null;
             }
         });
