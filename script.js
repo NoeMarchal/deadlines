@@ -181,7 +181,7 @@ async function generateTasksFromText(text) {
     const prompt = `
         Tu es un assistant de gestion de projet expert.
         Analyse les consignes suivantes et extrais une liste d'actions concrètes (To-Do List).
-        Génère entre 3 et 8 tâches maximum.
+        Génère entre 8 et 15 tâches maximum.
         
         RÈGLES STRICTES DE RÉPONSE :
         1. Réponds UNIQUEMENT avec la liste des tâches.
