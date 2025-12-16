@@ -176,7 +176,7 @@ async function generateTasksFromText(text) {
     if (!apiKey) throw new Error("Clé API manquante");
 
     // CORRECTION : Le modèle 2.5 n'existe pas encore, on utilise le 1.5-flash (rapide/efficace)
-    const modelName = "gemini-1.5-flash"; 
+    const modelName = "gemini-2.5"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     // OPTIMISATION DU PROMPT
