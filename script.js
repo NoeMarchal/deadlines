@@ -175,28 +175,39 @@ async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
 
-    const modelName = "gemini-2.5-flash";
+    // CORRECTION : Le modèle 2.5 n'existe pas encore, on utilise le 1.5-flash (rapide/efficace)
+    const modelName = "gemini-1.5-flash"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
+    // OPTIMISATION DU PROMPT
     const prompt = `
-        Tu es un assistant de gestion de projet expert.
-        Analyse les consignes suivantes et extrais une liste d'actions concrètes (To-Do List).
-        Génère entre 8 et 15 tâches maximum.
+        Tu es un assistant Project Manager expert (PMP certifié).
         
-        RÈGLES STRICTES DE RÉPONSE :
-        1. Réponds UNIQUEMENT avec la liste des tâches.
-        2. Une tâche par ligne.
-        3. Pas de numéros, pas de tirets au début.
-        4. Pas de phrase d'introduction.
+        OBJECTIF : 
+        Transforme le texte fourni en une liste d'actions concrètes, chronologiques et réalisables (To-Do List).
         
-        CONSIGNES : 
-        ${text.substring(0, 8000)}
+        CRITÈRES DE QUALITÉ :
+        - Génère entre 8 et 15 tâches.
+        - Chaque tâche doit commencer par un VERBE D'ACTION à l'infinitif (Ex: "Rédiger...", "Envoyer...", "Développer...").
+        - Sois précis mais concis (max 10 mots par tâche).
+        - Ignore le texte qui n'est pas une consigne ou une action.
+
+        FORMAT DE RÉPONSE ATTENDU (STRICTEMENT JSON) :
+        Tu dois répondre UNIQUEMENT avec un tableau JSON de chaînes de caractères (Array of Strings).
+        Exemple : ["Créer la maquette", "Valider avec le client", "Mettre en prod"]
+
+        TEXTE À ANALYSER : 
+        ${text.substring(0, 15000)} 
     `;
 
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({ 
+            contents: [{ parts: [{ text: prompt }] }],
+            // On force la température basse pour que l'IA soit "carrée" et pas créative
+            generationConfig: { temperature: 0.2 } 
+        })
     });
 
     const data = await response.json();
@@ -210,10 +221,28 @@ async function generateTasksFromText(text) {
         throw new Error("L'IA n'a renvoyé aucune réponse.");
     }
 
-    const rawText = data.candidates[0].content.parts[0].text;
-    return rawText.split('\n')
-        .map(line => line.replace(/^[\*\-\d\.]+\s*/, '').trim())
-        .filter(line => line.length > 2);
+    let rawText = data.candidates[0].content.parts[0].text;
+
+    // NETTOYAGE : Gemini entoure souvent le JSON de ```json ... ```
+    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    try {
+        // Parsing propre du JSON
+        const tasksArray = JSON.parse(rawText);
+        
+        // Vérification que c'est bien un tableau
+        if (Array.isArray(tasksArray)) {
+            return tasksArray;
+        } else {
+            throw new Error("Format reçu incorrect");
+        }
+    } catch (e) {
+        console.error("Échec du parsing JSON IA:", rawText);
+        // Fallback au cas où l'IA hallucine et envoie du texte brut
+        return rawText.split('\n')
+            .map(line => line.replace(/^[\*\-\d\.]+\s*/, '').trim())
+            .filter(line => line.length > 2);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
