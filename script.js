@@ -174,10 +174,10 @@ async function extractTextFromPDF(file) {
 async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
-    const modelName = "gemini-2.5-flash"; 
+    const modelName = "gemini-2.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-const prompt = `
+    const prompt = `
         Tu es un Senior Project Manager certifié PMP. Ton expertise porte sur la décomposition de projets complexes en lots de travaux (Work Packages) exploitables.
 
         CONTEXTE : 
@@ -211,9 +211,9 @@ const prompt = `
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.2 } 
+            generationConfig: { temperature: 0.2 }
         })
     });
 
@@ -235,7 +235,7 @@ const prompt = `
     try {
 
         const tasksArray = JSON.parse(rawText);
-        
+
         if (Array.isArray(tasksArray)) {
             return tasksArray;
         } else {
@@ -363,12 +363,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 const text = await extractTextFromPDF(file);
                 const newTasks = await generateTasksFromText(text);
 
-
                 const newTasksObjects = newTasks.map((t, index) => ({
-                    id: Date.now() + index,
-                    desc: t,
-                    done: false
+                    id: Date.now() + "_" + index,
+                    isMain: true,
+                    desc: t.tache,
+                    done: false,
+                    subTasks: t.sous_taches.map((sub, subIndex) => ({
+                        id: Date.now() + "_" + index + "_sub_" + subIndex,
+                        desc: sub,
+                        done: false
+                    }))
                 }));
+
 
                 const projectRef = doc(db, "projects", targetProjectIdForAI);
 
@@ -540,27 +546,45 @@ document.addEventListener("DOMContentLoaded", () => {
          `;
 
         let tasksHTML = '';
-        const tasksList = aiTasks.map(t => `
-            <div class="task-item ${t.done ? 'done' : ''}">
-                <div class="task-left">
-                    <input type="checkbox" class="task-checkbox" data-pid="${projectId}" data-tid="${t.id}" ${t.done ? 'checked' : ''}>
-                    <span>${t.desc}</span>
-                </div>
-                <button class="task-delete-small" data-pid="${projectId}" data-tid="${t.id}" title="Supprimer cette ligne">×</button>
+        const tasksListHTML = aiTasks.map(mainTask => {
+
+            const subTasksHTML = (mainTask.subTasks || []).map(sub => `
+        <div class="task-item task-sub ${sub.done ? 'done' : ''}" style="margin-left: 20px; border-left: 2px solid #333;">
+            <div class="task-left">
+                <input type="checkbox" class="task-checkbox" data-pid="${projectId}" data-tid="${sub.id}" data-parent="${mainTask.id}" ${sub.done ? 'checked' : ''}>
+                <span>${sub.desc}</span>
             </div>
-        `).join('');
+            <button class="task-delete-small" data-pid="${projectId}" data-tid="${sub.id}" data-parent="${mainTask.id}">×</button>
+        </div>
+    `).join('');
+
+            return `
+        <div class="task-group" style="margin-bottom: 15px;">
+            <div class="task-item task-main ${mainTask.done ? 'done' : ''}" style="background: rgba(0, 255, 0, 0.05); border-bottom: 1px solid #333;">
+                <div class="task-left">
+                    <input type="checkbox" class="task-checkbox" data-pid="${projectId}" data-tid="${mainTask.id}" ${mainTask.done ? 'checked' : ''}>
+                    <strong style="color: #00ff00;">${mainTask.desc}</strong>
+                </div>
+                <button class="task-delete-small" data-pid="${projectId}" data-tid="${mainTask.id}">×</button>
+            </div>
+            <div class="sub-tasks-container">
+                ${subTasksHTML}
+            </div>
+        </div>
+    `;
+        }).join('');
 
         tasksHTML = `
-            <div class="ai-tasks-container">
-                <span class="ai-tasks-title">CHECKLIST (IA & PERSO) :</span>
-                ${tasksList}
-                
-                <div class="add-task-row">
-                    <input type="text" class="add-task-input" id="input-task-${projectId}" placeholder="Ajouter une étape...">
-                    <button class="add-task-btn-small" data-id="${projectId}">OK</button>
-                </div>
-            </div>
-        `;
+    <div class="ai-tasks-container">
+        <span class="ai-tasks-title">FEUILLE DE ROUTE (IA) :</span>
+        ${tasksListHTML}
+        
+        <div class="add-task-row">
+            <input type="text" class="add-task-input" id="input-task-${projectId}" placeholder="Ajouter une tâche manuelle...">
+            <button class="add-task-btn-small" data-id="${projectId}">OK</button>
+        </div>
+    </div>
+`;
 
         const progressInnerClass = status === "completed" ? "is-completed" : "";
 
@@ -625,26 +649,76 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
+            // Dans projectsGrid.addEventListener("click", ...)
+
+            // --- GESTION DES CHECKBOX (Mise à jour) ---
             if (e.target.classList.contains('task-checkbox')) {
                 const pid = e.target.getAttribute('data-pid');
-                const tid = parseFloat(e.target.getAttribute('data-tid'));
+                const tid = e.target.getAttribute('data-tid'); // Note: ID est maintenant une string
+                const parentId = e.target.getAttribute('data-parent'); // Peut être null
                 const isChecked = e.target.checked;
 
+                // Mise à jour visuelle immédiate
                 const taskItem = e.target.closest('.task-item');
-                if (taskItem) {
-                    if (isChecked) taskItem.classList.add('done');
-                    else taskItem.classList.remove('done');
-                }
+                if (taskItem) isChecked ? taskItem.classList.add('done') : taskItem.classList.remove('done');
 
                 const projectRef = doc(db, "projects", pid);
                 const projectSnap = await getDoc(projectRef);
 
                 if (projectSnap.exists()) {
                     let tasks = projectSnap.data().aiTasks || [];
-                    tasks = tasks.map(t => {
-                        if (t.id === tid) t.done = isChecked;
-                        return t;
+
+                    // Logique de mise à jour imbriquée
+                    tasks = tasks.map(mainTask => {
+                        // Cas 1 : C'est la tâche principale qu'on a cliqué
+                        if (mainTask.id === tid) {
+                            mainTask.done = isChecked;
+                        }
+                        // Cas 2 : C'est une sous-tâche (on regarde dedans)
+                        if (mainTask.subTasks) {
+                            mainTask.subTasks = mainTask.subTasks.map(sub => {
+                                if (sub.id === tid) sub.done = isChecked;
+                                return sub;
+                            });
+                        }
+                        return mainTask;
                     });
+
+                    await updateDoc(projectRef, { aiTasks: tasks });
+                }
+            }
+
+
+            if (e.target.classList.contains('task-delete-small')) {
+                const pid = e.target.getAttribute('data-pid');
+                const tid = e.target.getAttribute('data-tid');
+
+
+                const taskGroup = e.target.closest('.task-group');
+                const taskItem = e.target.closest('.task-item');
+
+                const projectRef = doc(db, "projects", pid);
+                const projectSnap = await getDoc(projectRef);
+
+                if (projectSnap.exists()) {
+                    let tasks = projectSnap.data().aiTasks || [];
+
+
+                    const initialLength = tasks.length;
+
+                    tasks = tasks.filter(t => t.id !== tid);
+                    if (tasks.length === initialLength) {
+                        tasks = tasks.map(mainTask => {
+                            if (mainTask.subTasks) {
+                                mainTask.subTasks = mainTask.subTasks.filter(sub => sub.id !== tid);
+                            }
+                            return mainTask;
+                        });
+                        if (taskItem) taskItem.remove();
+                    } else {
+                        if (taskGroup) taskGroup.remove()
+                    }
+
                     await updateDoc(projectRef, { aiTasks: tasks });
                 }
             }

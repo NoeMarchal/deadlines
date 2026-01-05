@@ -1015,3 +1015,18 @@ footer {
   background: var(--accent-color);
   color: #000;
 }
+
+.task-main {
+  padding: 10px;
+  font-size: 1em;
+}
+
+.task-sub {
+  font-size: 0.9em;
+  padding: 5px 10px;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.sub-tasks-container {
+  padding-left: 10px;
+}
