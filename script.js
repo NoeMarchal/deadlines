@@ -178,24 +178,31 @@ async function generateTasksFromText(text) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
 const prompt = `
-        Tu es un Senior Project Manager certifié PMP et expert en méthodologies Agiles et Waterfall. 
-        
+        Tu es un Senior Project Manager certifié PMP. Ton expertise porte sur la décomposition de projets complexes en lots de travaux (Work Packages) exploitables.
+
         CONTEXTE : 
-        Tu reçois des notes brutes, un compte-rendu ou un brief de projet. Ton rôle est de décomposer ce texte en un plan d'action structuré suivant la logique du WBS (Work Breakdown Structure).
+        Tu analyses un texte brut pour en extraire une feuille de route exhaustive.
 
         OBJECTIF : 
-        Extraire et ordonner entre 8 et 15 tâches critiques pour mener à bien le projet décrit.
+        Générer exactement 20 tâches principales, ordonnées chronologiquement, couvrant tout le cycle de vie du projet (Cadrage, Planification, Exécution, Contrôle, Clôture).
 
-        CRITÈRES DE QUALITÉ RIGOUREUX :
-        1. CHRONOLOGIE : Les tâches doivent suivre l'ordre logique de réalisation (dépendances avant-après).
-        2. STRUCTURE : Utilise impérativement un VERBE D'ACTION à l'infinitif en début de phrase.
-        3. PRÉCISION : Chaque tâche doit être un "Action Item" concret, pas une généralité (ex: "Définir les KPIs" plutôt que "S'occuper des chiffres").
-        4. CONCISION : Max 12 mots par tâche pour une lisibilité optimale.
-        5. FILTRAGE : Ignore les commentaires d'ambiance ou les digressions du texte source.
+        CONSIGNES DE STRUCTURE (STRICTES) :
+        1. QUANTITÉ : Produire 20 tâches principales.
+        2. SOUS-TÂCHES : Pour chaque tâche principale, générer en moyenne 4 sous-tâches techniques et actionnables.
+        3. SYNTAXE : Chaque entrée (tâche et sous-tâche) doit commencer par un VERBE D'ACTION à l'infinitif.
+        4. CHRONOLOGIE : L'ordre doit respecter les dépendances critiques (ne pas tester avant de développer).
+        5. PRÉCISION : Éviter le jargon flou. Préférer "Configurer le serveur DNS" à "S'occuper de l'informatique".
+        6. CONCISION : Max 10 mots par ligne.
 
-        FORMAT DE RÉPONSE (STRICT) :
-        Tu dois répondre EXCLUSIVEMENT sous la forme d'un tableau JSON de chaînes de caractères. 
-        Aucune introduction, aucune conclusion, aucun texte en dehors du JSON.
+        FORMAT DE RÉPONSE ATTENDU (JSON STRICT) :
+        Tu dois répondre UNIQUEMENT par un JSON respectant exactement cette structure :
+        [
+          {
+            "tache": "Titre de la tâche principale",
+            "sous_taches": ["Sous-tâche 1", "Sous-tâche 2", "Sous-tâche 3", "Sous-tâche 4"]
+          },
+          ... (répéter pour les 20 tâches)
+        ]
 
         TEXTE SOURCE : 
         ${text.substring(0, 15000)} 
