@@ -174,29 +174,30 @@ async function extractTextFromPDF(file) {
 async function generateTasksFromText(text) {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Clé API manquante");
-
-    // CORRECTION : Le modèle 2.5 n'existe pas encore, on utilise le 1.5-flash (rapide/efficace)
     const modelName = "gemini-2.5-flash"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-    // OPTIMISATION DU PROMPT
-    const prompt = `
-        Tu es un assistant Project Manager expert (PMP certifié).
+const prompt = `
+        Tu es un Senior Project Manager certifié PMP et expert en méthodologies Agiles et Waterfall. 
         
+        CONTEXTE : 
+        Tu reçois des notes brutes, un compte-rendu ou un brief de projet. Ton rôle est de décomposer ce texte en un plan d'action structuré suivant la logique du WBS (Work Breakdown Structure).
+
         OBJECTIF : 
-        Transforme le texte fourni en une liste d'actions concrètes, chronologiques et réalisables (To-Do List).
-        
-        CRITÈRES DE QUALITÉ :
-        - Génère entre 8 et 15 tâches.
-        - Chaque tâche doit commencer par un VERBE D'ACTION à l'infinitif (Ex: "Rédiger...", "Envoyer...", "Développer...").
-        - Sois précis mais concis (max 10 mots par tâche).
-        - Ignore le texte qui n'est pas une consigne ou une action.
+        Extraire et ordonner entre 8 et 15 tâches critiques pour mener à bien le projet décrit.
 
-        FORMAT DE RÉPONSE ATTENDU (STRICTEMENT JSON) :
-        Tu dois répondre UNIQUEMENT avec un tableau JSON de chaînes de caractères (Array of Strings).
-        Exemple : ["Créer la maquette", "Valider avec le client", "Mettre en prod"]
+        CRITÈRES DE QUALITÉ RIGOUREUX :
+        1. CHRONOLOGIE : Les tâches doivent suivre l'ordre logique de réalisation (dépendances avant-après).
+        2. STRUCTURE : Utilise impérativement un VERBE D'ACTION à l'infinitif en début de phrase.
+        3. PRÉCISION : Chaque tâche doit être un "Action Item" concret, pas une généralité (ex: "Définir les KPIs" plutôt que "S'occuper des chiffres").
+        4. CONCISION : Max 12 mots par tâche pour une lisibilité optimale.
+        5. FILTRAGE : Ignore les commentaires d'ambiance ou les digressions du texte source.
 
-        TEXTE À ANALYSER : 
+        FORMAT DE RÉPONSE (STRICT) :
+        Tu dois répondre EXCLUSIVEMENT sous la forme d'un tableau JSON de chaînes de caractères. 
+        Aucune introduction, aucune conclusion, aucun texte en dehors du JSON.
+
+        TEXTE SOURCE : 
         ${text.substring(0, 15000)} 
     `;
 
@@ -205,7 +206,6 @@ async function generateTasksFromText(text) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             contents: [{ parts: [{ text: prompt }] }],
-            // On force la température basse pour que l'IA soit "carrée" et pas créative
             generationConfig: { temperature: 0.2 } 
         })
     });
@@ -223,14 +223,12 @@ async function generateTasksFromText(text) {
 
     let rawText = data.candidates[0].content.parts[0].text;
 
-    // NETTOYAGE : Gemini entoure souvent le JSON de ```json ... ```
     rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
 
     try {
-        // Parsing propre du JSON
+
         const tasksArray = JSON.parse(rawText);
         
-        // Vérification que c'est bien un tableau
         if (Array.isArray(tasksArray)) {
             return tasksArray;
         } else {
@@ -238,7 +236,6 @@ async function generateTasksFromText(text) {
         }
     } catch (e) {
         console.error("Échec du parsing JSON IA:", rawText);
-        // Fallback au cas où l'IA hallucine et envoie du texte brut
         return rawText.split('\n')
             .map(line => line.replace(/^[\*\-\d\.]+\s*/, '').trim())
             .filter(line => line.length > 2);
