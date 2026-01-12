@@ -612,18 +612,21 @@ document.addEventListener("DOMContentLoaded", () => {
         return projectCard;
     }
 
-    if (projectsGrid) {
+if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
 
+            // --- 1. Gestion du repli (Accordéon) ---
             if (e.target.classList.contains("toggle-project-btn")) {
                 const btn = e.target;
                 const card = btn.closest('.project-card');
                 const body = card.querySelector('.project-body');
-
+                
                 body.classList.toggle('hidden');
                 card.classList.toggle('collapsed');
                 return;
             }
+
+            // --- 2. Suppression de projet ---
             if (e.target.classList.contains("delete-btn")) {
                 const idToDelete = e.target.getAttribute("data-id");
                 if (await myConfirm("Supprimer ce projet ?")) {
@@ -631,7 +634,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-
+            // --- 3. Terminer le projet ---
             if (e.target.classList.contains('complete-btn')) {
                 const idToComplete = e.target.getAttribute('data-id');
                 try {
@@ -640,12 +643,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (err) { console.error(err); }
             }
 
+            // --- 4. Bouton IA ---
             if (e.target.classList.contains('ai-task-btn')) {
                 targetProjectIdForAI = e.target.getAttribute('data-id');
                 if (pdfInput) pdfInput.click();
             }
 
-
+            // --- 5. Bouton Modifier ---
             if (e.target.classList.contains('edit-btn')) {
                 const pid = e.target.getAttribute('data-id');
                 const docRef = doc(db, "projects", pid);
@@ -663,13 +667,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // Dans projectsGrid.addEventListener("click", ...)
-
-            // --- GESTION DES CHECKBOX (Mise à jour) ---
+            // --- 6. GESTION DES CASES À COCHER (CHECKBOX) ---
             if (e.target.classList.contains('task-checkbox')) {
                 const pid = e.target.getAttribute('data-pid');
-                const tid = e.target.getAttribute('data-tid'); // Note: ID est maintenant une string
-                const parentId = e.target.getAttribute('data-parent'); // Peut être null
+                const tid = e.target.getAttribute('data-tid');
                 const isChecked = e.target.checked;
 
                 // Mise à jour visuelle immédiate
@@ -681,15 +682,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (projectSnap.exists()) {
                     let tasks = projectSnap.data().aiTasks || [];
-<<<<<<< HEAD
 
-                    // Logique de mise à jour imbriquée
                     tasks = tasks.map(mainTask => {
-                        // Cas 1 : C'est la tâche principale qu'on a cliqué
+                        // Si c'est la tâche principale
                         if (mainTask.id === tid) {
                             mainTask.done = isChecked;
+                            // On coche/décoche aussi toutes les sous-tâches
+                            if (mainTask.subTasks) {
+                                mainTask.subTasks = mainTask.subTasks.map(sub => ({
+                                    ...sub,
+                                    done: isChecked
+                                }));
+                            }
                         }
-                        // Cas 2 : C'est une sous-tâche (on regarde dedans)
+                        
+                        // Si c'est une sous-tâche
                         if (mainTask.subTasks) {
                             mainTask.subTasks = mainTask.subTasks.map(sub => {
                                 if (sub.id === tid) sub.done = isChecked;
@@ -703,113 +710,60 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
+            // --- 7. Ajouter une tâche manuelle ---
+            if (e.target.classList.contains('add-task-btn-small')) {
+                const pid = e.target.getAttribute('data-id');
+                const input = document.getElementById(`input-task-${pid}`);
+                const text = input.value.trim();
 
+                if (!text) return;
+
+                const projectRef = doc(db, "projects", pid);
+                const projectSnap = await getDoc(projectRef);
+
+                if (projectSnap.exists()) {
+                    let currentTasks = projectSnap.data().aiTasks || [];
+                    const newTask = {
+                        id: Date.now().toString(),
+                        desc: text,
+                        done: false
+                    };
+                    currentTasks.push(newTask);
+                    await updateDoc(projectRef, { aiTasks: currentTasks });
+                }
+            }
+
+            // --- 8. Supprimer une tâche ---
             if (e.target.classList.contains('task-delete-small')) {
                 const pid = e.target.getAttribute('data-pid');
-                const tid = e.target.getAttribute('data-tid');
+                const tid = e.target.getAttribute('data-tid'); // Garder en string si vos IDs sont des strings
 
-
-                const taskGroup = e.target.closest('.task-group');
                 const taskItem = e.target.closest('.task-item');
+                if (taskItem) taskItem.remove();
 
                 const projectRef = doc(db, "projects", pid);
                 const projectSnap = await getDoc(projectRef);
 
                 if (projectSnap.exists()) {
                     let tasks = projectSnap.data().aiTasks || [];
-
-
+                    
+                    // On filtre pour supprimer la tâche (principale ou sous-tâche)
                     const initialLength = tasks.length;
+                    tasks = tasks.filter(t => t.id !== tid && t.id != tid); // Check loose equality au cas où
 
-                    tasks = tasks.filter(t => t.id !== tid);
+                    // Si rien n'a changé (c'était peut-être une sous-tâche)
                     if (tasks.length === initialLength) {
                         tasks = tasks.map(mainTask => {
                             if (mainTask.subTasks) {
-                                mainTask.subTasks = mainTask.subTasks.filter(sub => sub.id !== tid);
+                                mainTask.subTasks = mainTask.subTasks.filter(sub => sub.id !== tid && sub.id != tid);
                             }
                             return mainTask;
                         });
-                        if (taskItem) taskItem.remove();
-                    } else {
-                        if (taskGroup) taskGroup.remove()
                     }
 
                     await updateDoc(projectRef, { aiTasks: tasks });
                 }
             }
-            if (e.target.classList.contains('add-task-btn-small')) {
-                const pid = e.target.getAttribute('data-id');
-                const input = document.getElementById(`input-task-${pid}`);
-                const text = input.value.trim();
-=======
-                    if (mainTask.id === tid) {
-                        mainTask.done = isChecked;
->>>>>>> cb6e7f6 (style: add styles for project toggle button and body visibility)
-
-                        if (mainTask.subTasks && mainTask.subTasks.length > 0) {
-                            mainTask.subTasks = mainTask.subTasks.map(sub => ({
-                                ...sub,
-                                done: isChecked
-                            }));
-                        }
-                    }
-
-                    if (mainTask.subTasks) {
-                        mainTask.subTasks = mainTask.subTasks.map(sub => {
-                            if (sub.id === tid) sub.done = isChecked;
-                            return sub;
-                        });
-                    }
-                    return mainTask
-        await updateDoc(projectRef, { aiTasks: tasks });
-    }
-}
-            if (e.target.classList.contains('add-task-btn-small')) {
-    const pid = e.target.getAttribute('data-id');
-    const input = document.getElementById(`input-task-${pid}`);
-    const text = input.value.trim();
-
-    if (!text) return;
-
-    const projectRef = doc(db, "projects", pid);
-    const projectSnap = await getDoc(projectRef);
-
-    if (projectSnap.exists()) {
-        let currentTasks = projectSnap.data().aiTasks || [];
-
-        const newTask = {
-            id: Date.now(),
-            desc: text,
-            done: false
-        };
-
-
-        currentTasks.push(newTask);
-
-        await updateDoc(projectRef, { aiTasks: currentTasks });
-    }
-}
-
-if (e.target.classList.contains('task-delete-small')) {
-    const pid = e.target.getAttribute('data-pid');
-    const tid = parseFloat(e.target.getAttribute('data-tid'));
-
-
-    const taskItem = e.target.closest('.task-item');
-    if (taskItem) taskItem.remove();
-
-    const projectRef = doc(db, "projects", pid);
-    const projectSnap = await getDoc(projectRef);
-
-    if (projectSnap.exists()) {
-        let currentTasks = projectSnap.data().aiTasks || [];
-
-
-        const updatedTasks = currentTasks.filter(t => t.id !== tid);
-
-        await updateDoc(projectRef, { aiTasks: updatedTasks });
-    }
-}
         });
     }
 
