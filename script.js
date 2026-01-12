@@ -614,8 +614,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
-
-            // --- 1. Gestion du repli (Accordéon) ---
             if (e.target.classList.contains("toggle-project-btn")) {
                 const btn = e.target;
                 const card = btn.closest('.project-card');
@@ -625,16 +623,12 @@ if (projectsGrid) {
                 card.classList.toggle('collapsed');
                 return;
             }
-
-            // --- 2. Suppression de projet ---
             if (e.target.classList.contains("delete-btn")) {
                 const idToDelete = e.target.getAttribute("data-id");
                 if (await myConfirm("Supprimer ce projet ?")) {
                     try { await deleteDoc(doc(db, "projects", idToDelete)); } catch (err) { console.error(err); }
                 }
             }
-
-            // --- 3. Terminer le projet ---
             if (e.target.classList.contains('complete-btn')) {
                 const idToComplete = e.target.getAttribute('data-id');
                 try {
@@ -642,14 +636,10 @@ if (projectsGrid) {
                     if (currentUser) updateUserStats(currentUser, GAME_CONFIG.xpReward, GAME_CONFIG.coinReward);
                 } catch (err) { console.error(err); }
             }
-
-            // --- 4. Bouton IA ---
             if (e.target.classList.contains('ai-task-btn')) {
                 targetProjectIdForAI = e.target.getAttribute('data-id');
                 if (pdfInput) pdfInput.click();
             }
-
-            // --- 5. Bouton Modifier ---
             if (e.target.classList.contains('edit-btn')) {
                 const pid = e.target.getAttribute('data-id');
                 const docRef = doc(db, "projects", pid);
@@ -666,14 +656,10 @@ if (projectsGrid) {
                     editOverlay.style.display = 'flex';
                 }
             }
-
-            // --- 6. GESTION DES CASES À COCHER (CHECKBOX) ---
             if (e.target.classList.contains('task-checkbox')) {
                 const pid = e.target.getAttribute('data-pid');
                 const tid = e.target.getAttribute('data-tid');
                 const isChecked = e.target.checked;
-
-                // Mise à jour visuelle immédiate
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) isChecked ? taskItem.classList.add('done') : taskItem.classList.remove('done');
 
@@ -684,10 +670,8 @@ if (projectsGrid) {
                     let tasks = projectSnap.data().aiTasks || [];
 
                     tasks = tasks.map(mainTask => {
-                        // Si c'est la tâche principale
                         if (mainTask.id === tid) {
                             mainTask.done = isChecked;
-                            // On coche/décoche aussi toutes les sous-tâches
                             if (mainTask.subTasks) {
                                 mainTask.subTasks = mainTask.subTasks.map(sub => ({
                                     ...sub,
@@ -695,8 +679,6 @@ if (projectsGrid) {
                                 }));
                             }
                         }
-                        
-                        // Si c'est une sous-tâche
                         if (mainTask.subTasks) {
                             mainTask.subTasks = mainTask.subTasks.map(sub => {
                                 if (sub.id === tid) sub.done = isChecked;
@@ -709,8 +691,6 @@ if (projectsGrid) {
                     await updateDoc(projectRef, { aiTasks: tasks });
                 }
             }
-
-            // --- 7. Ajouter une tâche manuelle ---
             if (e.target.classList.contains('add-task-btn-small')) {
                 const pid = e.target.getAttribute('data-id');
                 const input = document.getElementById(`input-task-${pid}`);
@@ -732,11 +712,9 @@ if (projectsGrid) {
                     await updateDoc(projectRef, { aiTasks: currentTasks });
                 }
             }
-
-            // --- 8. Supprimer une tâche ---
             if (e.target.classList.contains('task-delete-small')) {
                 const pid = e.target.getAttribute('data-pid');
-                const tid = e.target.getAttribute('data-tid'); // Garder en string si vos IDs sont des strings
+                const tid = e.target.getAttribute('data-tid');
 
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) taskItem.remove();
@@ -746,12 +724,8 @@ if (projectsGrid) {
 
                 if (projectSnap.exists()) {
                     let tasks = projectSnap.data().aiTasks || [];
-                    
-                    // On filtre pour supprimer la tâche (principale ou sous-tâche)
                     const initialLength = tasks.length;
-                    tasks = tasks.filter(t => t.id !== tid && t.id != tid); // Check loose equality au cas où
-
-                    // Si rien n'a changé (c'était peut-être une sous-tâche)
+                    tasks = tasks.filter(t => t.id !== tid && t.id != tid);
                     if (tasks.length === initialLength) {
                         tasks = tasks.map(mainTask => {
                             if (mainTask.subTasks) {
