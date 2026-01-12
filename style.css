@@ -1030,3 +1030,26 @@ footer {
 .sub-tasks-container {
   padding-left: 10px;
 }
+
+.toggle-project-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent-color);
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    padding: 0 10px;
+}
+
+.project-card.collapsed .toggle-project-btn {
+    transform: rotate(-90deg);
+}
+
+.project-body {
+    display: block;
+    margin-top: 15px;
+}
+
+.project-body.hidden {
+    display: none;
+}

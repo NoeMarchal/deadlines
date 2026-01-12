@@ -588,28 +588,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const progressInnerClass = status === "completed" ? "is-completed" : "";
 
-        projectCard.innerHTML = ` 
-             <div class="project-header"> 
-                 <h3>${project.name}</h3> 
-                 <span class="project-dates"> 
-                     ${new Date(project.start).toLocaleDateString()} - ${new Date(project.end).toLocaleDateString()} 
-                 </span> 
-             </div> 
-             <div class="progress-bar-container"> 
-                 <div class="progress-bar-inner ${progressInnerClass}" style="width: ${percentage}%;"> 
-                     ${percentage}% 
-                 </div> 
-             </div> 
-             ${tasksHTML}
-             ${projectActionsHTML}
-         `;
+        projectCard.innerHTML = `
+        <div class="project-header">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="toggle-project-btn" data-id="${projectId}">▼</button>
+                <h3>${project.name}</h3>
+            </div>
+            <span class="project-dates">
+                ${new Date(project.start).toLocaleDateString()} - ${new Date(project.end).toLocaleDateString()}
+            </span>
+        </div>
+
+        <div class="project-body" id="body-${projectId}">
+            <div class="progress-bar-container">
+                <div class="progress-bar-inner ${progressInnerClass}" style="width: ${percentage}%;">
+                    ${percentage}%
+                </div>
+            </div>
+            ${tasksHTML}
+            ${projectActionsHTML}
+        </div>
+    `;
         return projectCard;
     }
 
     if (projectsGrid) {
         projectsGrid.addEventListener("click", async (e) => {
 
+            if (e.target.classList.contains("toggle-project-btn")) {
+                const btn = e.target;
+                const card = btn.closest('.project-card');
+                const body = card.querySelector('.project-body');
 
+                body.classList.toggle('hidden');
+                card.classList.toggle('collapsed');
+                return;
+            }
             if (e.target.classList.contains("delete-btn")) {
                 const idToDelete = e.target.getAttribute("data-id");
                 if (await myConfirm("Supprimer ce projet ?")) {
@@ -667,6 +681,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (projectSnap.exists()) {
                     let tasks = projectSnap.data().aiTasks || [];
+<<<<<<< HEAD
 
                     // Logique de mise à jour imbriquée
                     tasks = tasks.map(mainTask => {
@@ -726,296 +741,323 @@ document.addEventListener("DOMContentLoaded", () => {
                 const pid = e.target.getAttribute('data-id');
                 const input = document.getElementById(`input-task-${pid}`);
                 const text = input.value.trim();
+=======
+                    if (mainTask.id === tid) {
+                        mainTask.done = isChecked;
+>>>>>>> cb6e7f6 (style: add styles for project toggle button and body visibility)
 
-                if (!text) return;
-
-                const projectRef = doc(db, "projects", pid);
-                const projectSnap = await getDoc(projectRef);
-
-                if (projectSnap.exists()) {
-                    let currentTasks = projectSnap.data().aiTasks || [];
-
-                    const newTask = {
-                        id: Date.now(),
-                        desc: text,
-                        done: false
-                    };
-
-
-                    currentTasks.push(newTask);
-
-                    await updateDoc(projectRef, { aiTasks: currentTasks });
-                }
-            }
-
-            if (e.target.classList.contains('task-delete-small')) {
-                const pid = e.target.getAttribute('data-pid');
-                const tid = parseFloat(e.target.getAttribute('data-tid'));
-
-
-                const taskItem = e.target.closest('.task-item');
-                if (taskItem) taskItem.remove();
-
-                const projectRef = doc(db, "projects", pid);
-                const projectSnap = await getDoc(projectRef);
-
-                if (projectSnap.exists()) {
-                    let currentTasks = projectSnap.data().aiTasks || [];
-
-
-                    const updatedTasks = currentTasks.filter(t => t.id !== tid);
-
-                    await updateDoc(projectRef, { aiTasks: updatedTasks });
-                }
-            }
-        });
-    }
-
-    if (saveEditBtn) {
-        saveEditBtn.addEventListener('click', async () => {
-            const pid = editIdInput.value;
-            const name = editNameInput.value;
-            const start = editStartInput.value;
-            const end = editEndInput.value;
-            const priority = editPriorityInput.value;
-
-            if (new Date(start).getTime() >= new Date(end).getTime()) {
-                await myAlert("La date de fin doit être après la date de début !");
-                return;
-            }
-
-            try {
-                const docRef = doc(db, "projects", pid);
-                await updateDoc(docRef, {
-                    name: name,
-                    start: start,
-                    end: end,
-                    priority: priority
-                });
-
-                editOverlay.style.display = 'none';
-                await myAlert("Mission mise à jour !");
-            } catch (error) {
-                console.error(error);
-                await myAlert("Erreur lors de la modification.");
-            }
-        });
-    }
-
-    if (cancelEditBtn) {
-        cancelEditBtn.addEventListener('click', () => {
-            editOverlay.style.display = 'none';
-        });
-    }
-
-    async function loadCompanion(user) {
-        if (!companionSection) return;
-        companionSection.style.display = 'block';
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
-        let data = snap.data();
-
-        if (!data || !data.companion) {
-            const initialCompanion = { name: "Glitch", level: 1, currentXp: 0, maxXp: 100 };
-            await setDoc(userRef, { companion: initialCompanion }, { merge: true });
-            data = (await getDoc(userRef)).data();
-        }
-        renderCompanion(data.companion);
-    }
-
-    function renderCompanion(pet) {
-        if (!pet) return;
-        petNameDisplay.textContent = pet.name;
-        petLevelDisplay.textContent = `NIV ${pet.level}`;
-        const percent = Math.min((pet.currentXp / pet.maxXp) * 100, 100);
-        petXpBar.style.width = `${percent}%`;
-        let currentStage = PET_CONFIG.stages[0];
-        for (let stage of PET_CONFIG.stages) { if (pet.level >= stage.minLvl) currentStage = stage; }
-        petVisual.textContent = currentStage.art;
-        if (feedBtn) feedBtn.innerText = `⚡ Nourrir (${PET_CONFIG.costFeed} ₵)`;
-        if (renameBtn) renameBtn.innerText = `✎ Nom (${PET_CONFIG.costRename} ₵)`;
-    }
-
-    if (feedBtn) {
-        feedBtn.addEventListener('click', async () => {
-            if (!currentUser) return;
-            const userRef = doc(db, "users", currentUser.uid);
-            const snap = await getDoc(userRef);
-            const data = snap.data();
-            const userCoins = data.coins || 0;
-            if (userCoins < PET_CONFIG.costFeed) { await myAlert("⚠️ Pas assez de crédits !"); return; }
-
-            let pet = data.companion;
-            let newUserCoins = userCoins - PET_CONFIG.costFeed;
-            pet.currentXp += PET_CONFIG.xpGain;
-
-            if (pet.currentXp >= pet.maxXp) {
-                pet.level++;
-                pet.currentXp = pet.currentXp - pet.maxXp;
-                pet.maxXp = Math.floor(pet.maxXp * 1.3);
-                petMessage.textContent = "⚡ UPGRADE RÉUSSI !";
-                petMessage.style.color = "#00ff00";
-            } else {
-                petMessage.textContent = `Miam ! (+${PET_CONFIG.xpGain} XP Pet)`;
-                petMessage.style.color = "#aaa";
-            }
-
-            await updateDoc(userRef, { coins: newUserCoins, companion: pet });
-            updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
-            renderCompanion(pet);
-            setTimeout(() => petMessage.textContent = "En attente...", 2000);
-        });
-    }
-
-    if (renameBtn) {
-        renameBtn.addEventListener('click', async () => {
-            if (!currentUser) return;
-            const newName = await myPrompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`, "Ex: Glitch 2.0");
-            if (!newName || newName.trim() === "") return;
-
-            const userRef = doc(db, "users", currentUser.uid);
-            const snap = await getDoc(userRef);
-            const data = snap.data();
-            const userCoins = data.coins || 0;
-            if (userCoins < PET_CONFIG.costRename) { await myAlert("Crédits insuffisants."); return; }
-
-            let pet = data.companion;
-            pet.name = newName.trim();
-            let newUserCoins = userCoins - PET_CONFIG.costRename;
-            await updateDoc(userRef, { coins: newUserCoins, companion: pet });
-            updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
-            renderCompanion(pet);
-        });
-    }
-
-    const pomoSection = document.getElementById('pomodoro-section');
-    const pomoDisplay = document.getElementById('pomodoro-display');
-    const pomoStartBtn = document.getElementById('pomo-start-btn');
-    const pomoResetBtn = document.getElementById('pomo-reset-btn');
-    let pomoTimer = null;
-    let pomoTimeLeft = 25 * 60;
-    let isPomoRunning = false;
-
-    function updatePomoDisplay() {
-        const m = Math.floor(pomoTimeLeft / 60).toString().padStart(2, '0');
-        const s = (pomoTimeLeft % 60).toString().padStart(2, '0');
-        if (pomoDisplay) pomoDisplay.textContent = `${m}:${s}`;
-        document.title = isPomoRunning ? `${m}:${s} - Focus` : "Mes Deadlines";
-    }
-
-    if (pomoStartBtn) {
-        pomoStartBtn.addEventListener('click', () => {
-            if (isPomoRunning) {
-                clearInterval(pomoTimer);
-                isPomoRunning = false;
-                pomoStartBtn.textContent = "▶ START";
-                if (pomoSection) pomoSection.classList.remove('timer-running');
-            } else {
-                isPomoRunning = true;
-                pomoStartBtn.textContent = "❚❚ PAUSE";
-                if (pomoSection) pomoSection.classList.add('timer-running');
-                pomoTimer = setInterval(() => {
-                    if (pomoTimeLeft > 0) {
-                        pomoTimeLeft--;
-                        updatePomoDisplay();
-                    } else {
-                        clearInterval(pomoTimer);
-                        isPomoRunning = false;
-                        pomoSection.classList.remove('timer-running');
-                        pomoStartBtn.textContent = "▶ START";
-                        myAlert("🍅 SESSION TERMINÉE !\nPrends 5 minutes de pause.");
-                        pomoTimeLeft = 25 * 60;
-                        updatePomoDisplay();
+                        if (mainTask.subTasks && mainTask.subTasks.length > 0) {
+                            mainTask.subTasks = mainTask.subTasks.map(sub => ({
+                                ...sub,
+                                done: isChecked
+                            }));
+                        }
                     }
-                }, 1000);
-            }
+
+                    if (mainTask.subTasks) {
+                        mainTask.subTasks = mainTask.subTasks.map(sub => {
+                            if (sub.id === tid) sub.done = isChecked;
+                            return sub;
+                        });
+                    }
+                    return mainTask
+        await updateDoc(projectRef, { aiTasks: tasks });
+    }
+}
+            if (e.target.classList.contains('add-task-btn-small')) {
+    const pid = e.target.getAttribute('data-id');
+    const input = document.getElementById(`input-task-${pid}`);
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    const projectRef = doc(db, "projects", pid);
+    const projectSnap = await getDoc(projectRef);
+
+    if (projectSnap.exists()) {
+        let currentTasks = projectSnap.data().aiTasks || [];
+
+        const newTask = {
+            id: Date.now(),
+            desc: text,
+            done: false
+        };
+
+
+        currentTasks.push(newTask);
+
+        await updateDoc(projectRef, { aiTasks: currentTasks });
+    }
+}
+
+if (e.target.classList.contains('task-delete-small')) {
+    const pid = e.target.getAttribute('data-pid');
+    const tid = parseFloat(e.target.getAttribute('data-tid'));
+
+
+    const taskItem = e.target.closest('.task-item');
+    if (taskItem) taskItem.remove();
+
+    const projectRef = doc(db, "projects", pid);
+    const projectSnap = await getDoc(projectRef);
+
+    if (projectSnap.exists()) {
+        let currentTasks = projectSnap.data().aiTasks || [];
+
+
+        const updatedTasks = currentTasks.filter(t => t.id !== tid);
+
+        await updateDoc(projectRef, { aiTasks: updatedTasks });
+    }
+}
         });
     }
 
-    if (pomoResetBtn) {
-        pomoResetBtn.addEventListener('click', () => {
-            clearInterval(pomoTimer);
-            isPomoRunning = false;
-            pomoTimeLeft = 25 * 60;
-            updatePomoDisplay();
-            if (pomoStartBtn) pomoStartBtn.textContent = "▶ START";
-            if (pomoSection) pomoSection.classList.remove('timer-running');
-        });
-    }
+if (saveEditBtn) {
+    saveEditBtn.addEventListener('click', async () => {
+        const pid = editIdInput.value;
+        const name = editNameInput.value;
+        const start = editStartInput.value;
+        const end = editEndInput.value;
+        const priority = editPriorityInput.value;
 
-    function uiForLoggedIn(user) {
-        if (loginBtn) loginBtn.style.display = "none";
-        if (signupBtn) signupBtn.style.display = "none";
-
-        if (settingsBtn) settingsBtn.style.display = "inline-block";
-
-        if (projectForm) projectForm.style.display = "grid";
-        if (addProjectBtn) addProjectBtn.disabled = false;
-        if (projectStatsDiv) projectStatsDiv.style.display = "flex";
-        if (pomoSection) pomoSection.style.display = 'flex';
-    }
-
-    function uiForLoggedOut() {
-        if (loginBtn) loginBtn.style.display = "inline-block";
-        if (signupBtn) signupBtn.style.display = "inline-block";
-
-        if (settingsBtn) settingsBtn.style.display = "none";
-
-        if (projectForm) projectForm.style.display = "none";
-        if (addProjectBtn) addProjectBtn.disabled = true;
-        if (projectStatsDiv) projectStatsDiv.style.display = "none";
-        if (pomoSection) pomoSection.style.display = 'none';
-
-        if (pomoTimer) {
-            clearInterval(pomoTimer);
-            isPomoRunning = false;
-            pomoTimeLeft = 25 * 60;
-            updatePomoDisplay();
-            if (pomoStartBtn) pomoStartBtn.textContent = "▶ START";
+        if (new Date(start).getTime() >= new Date(end).getTime()) {
+            await myAlert("La date de fin doit être après la date de début !");
+            return;
         }
-    }
 
-    async function updateUserStats(user, xpGained = 0, coinsGained = 0) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        let currentXP = 0; let currentCoins = 0;
-        if (userSnap.exists()) {
-            const data = userSnap.data();
-            currentXP = data.xp || 0;
-            currentCoins = data.coins || 0;
+        try {
+            const docRef = doc(db, "projects", pid);
+            await updateDoc(docRef, {
+                name: name,
+                start: start,
+                end: end,
+                priority: priority
+            });
+
+            editOverlay.style.display = 'none';
+            await myAlert("Mission mise à jour !");
+        } catch (error) {
+            console.error(error);
+            await myAlert("Erreur lors de la modification.");
         }
-        let newXP = currentXP + xpGained;
-        let newCoins = currentCoins + coinsGained;
-        let newLevel = Math.floor(newXP / GAME_CONFIG.levelStep) + 1;
-        await setDoc(userRef, { xp: newXP, coins: newCoins, level: newLevel, email: user.email }, { merge: true });
-        updateTopBarUI(newXP, newLevel, newCoins);
-        if (xpGained > 0 || coinsGained > 0) await myAlert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
-    }
+    });
+}
 
-    async function syncUserData(user) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-            const data = userSnap.data();
-            updateTopBarUI(data.xp || 0, data.level || 1, data.coins || 0);
+if (cancelEditBtn) {
+    cancelEditBtn.addEventListener('click', () => {
+        editOverlay.style.display = 'none';
+    });
+}
+
+async function loadCompanion(user) {
+    if (!companionSection) return;
+    companionSection.style.display = 'block';
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+    let data = snap.data();
+
+    if (!data || !data.companion) {
+        const initialCompanion = { name: "Glitch", level: 1, currentXp: 0, maxXp: 100 };
+        await setDoc(userRef, { companion: initialCompanion }, { merge: true });
+        data = (await getDoc(userRef)).data();
+    }
+    renderCompanion(data.companion);
+}
+
+function renderCompanion(pet) {
+    if (!pet) return;
+    petNameDisplay.textContent = pet.name;
+    petLevelDisplay.textContent = `NIV ${pet.level}`;
+    const percent = Math.min((pet.currentXp / pet.maxXp) * 100, 100);
+    petXpBar.style.width = `${percent}%`;
+    let currentStage = PET_CONFIG.stages[0];
+    for (let stage of PET_CONFIG.stages) { if (pet.level >= stage.minLvl) currentStage = stage; }
+    petVisual.textContent = currentStage.art;
+    if (feedBtn) feedBtn.innerText = `⚡ Nourrir (${PET_CONFIG.costFeed} ₵)`;
+    if (renameBtn) renameBtn.innerText = `✎ Nom (${PET_CONFIG.costRename} ₵)`;
+}
+
+if (feedBtn) {
+    feedBtn.addEventListener('click', async () => {
+        if (!currentUser) return;
+        const userRef = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(userRef);
+        const data = snap.data();
+        const userCoins = data.coins || 0;
+        if (userCoins < PET_CONFIG.costFeed) { await myAlert("⚠️ Pas assez de crédits !"); return; }
+
+        let pet = data.companion;
+        let newUserCoins = userCoins - PET_CONFIG.costFeed;
+        pet.currentXp += PET_CONFIG.xpGain;
+
+        if (pet.currentXp >= pet.maxXp) {
+            pet.level++;
+            pet.currentXp = pet.currentXp - pet.maxXp;
+            pet.maxXp = Math.floor(pet.maxXp * 1.3);
+            petMessage.textContent = "⚡ UPGRADE RÉUSSI !";
+            petMessage.style.color = "#00ff00";
         } else {
-            updateTopBarUI(0, 1, 0);
+            petMessage.textContent = `Miam ! (+${PET_CONFIG.xpGain} XP Pet)`;
+            petMessage.style.color = "#aaa";
         }
-    }
 
-    function updateTopBarUI(xp, level, coins) {
-        if (!userLevelContainer) return;
-        const levelBadge = document.getElementById('level-badge');
-        const xpBarFill = document.getElementById('xp-bar-fill');
-        const xpText = document.getElementById('xp-text');
-        const coinsDisplay = document.getElementById('user-coins');
+        await updateDoc(userRef, { coins: newUserCoins, companion: pet });
+        updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
+        renderCompanion(pet);
+        setTimeout(() => petMessage.textContent = "En attente...", 2000);
+    });
+}
 
-        userLevelContainer.style.display = 'flex';
-        levelBadge.textContent = `LVL ${level}`;
-        const currentLevelXp = xp % GAME_CONFIG.levelStep;
-        xpText.textContent = `${currentLevelXp} / ${GAME_CONFIG.levelStep} XP`;
-        const progress = (currentLevelXp) / GAME_CONFIG.levelStep * 100;
-        xpBarFill.style.width = `${progress}%`;
-        if (coinsDisplay) coinsDisplay.textContent = `${coins} ₵`;
+if (renameBtn) {
+    renameBtn.addEventListener('click', async () => {
+        if (!currentUser) return;
+        const newName = await myPrompt(`Nouveau nom (Coût: ${PET_CONFIG.costRename} ₵) :`, "Ex: Glitch 2.0");
+        if (!newName || newName.trim() === "") return;
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(userRef);
+        const data = snap.data();
+        const userCoins = data.coins || 0;
+        if (userCoins < PET_CONFIG.costRename) { await myAlert("Crédits insuffisants."); return; }
+
+        let pet = data.companion;
+        pet.name = newName.trim();
+        let newUserCoins = userCoins - PET_CONFIG.costRename;
+        await updateDoc(userRef, { coins: newUserCoins, companion: pet });
+        updateTopBarUI(data.xp || 0, data.level || 1, newUserCoins);
+        renderCompanion(pet);
+    });
+}
+
+const pomoSection = document.getElementById('pomodoro-section');
+const pomoDisplay = document.getElementById('pomodoro-display');
+const pomoStartBtn = document.getElementById('pomo-start-btn');
+const pomoResetBtn = document.getElementById('pomo-reset-btn');
+let pomoTimer = null;
+let pomoTimeLeft = 25 * 60;
+let isPomoRunning = false;
+
+function updatePomoDisplay() {
+    const m = Math.floor(pomoTimeLeft / 60).toString().padStart(2, '0');
+    const s = (pomoTimeLeft % 60).toString().padStart(2, '0');
+    if (pomoDisplay) pomoDisplay.textContent = `${m}:${s}`;
+    document.title = isPomoRunning ? `${m}:${s} - Focus` : "Mes Deadlines";
+}
+
+if (pomoStartBtn) {
+    pomoStartBtn.addEventListener('click', () => {
+        if (isPomoRunning) {
+            clearInterval(pomoTimer);
+            isPomoRunning = false;
+            pomoStartBtn.textContent = "▶ START";
+            if (pomoSection) pomoSection.classList.remove('timer-running');
+        } else {
+            isPomoRunning = true;
+            pomoStartBtn.textContent = "❚❚ PAUSE";
+            if (pomoSection) pomoSection.classList.add('timer-running');
+            pomoTimer = setInterval(() => {
+                if (pomoTimeLeft > 0) {
+                    pomoTimeLeft--;
+                    updatePomoDisplay();
+                } else {
+                    clearInterval(pomoTimer);
+                    isPomoRunning = false;
+                    pomoSection.classList.remove('timer-running');
+                    pomoStartBtn.textContent = "▶ START";
+                    myAlert("🍅 SESSION TERMINÉE !\nPrends 5 minutes de pause.");
+                    pomoTimeLeft = 25 * 60;
+                    updatePomoDisplay();
+                }
+            }, 1000);
+        }
+    });
+}
+
+if (pomoResetBtn) {
+    pomoResetBtn.addEventListener('click', () => {
+        clearInterval(pomoTimer);
+        isPomoRunning = false;
+        pomoTimeLeft = 25 * 60;
+        updatePomoDisplay();
+        if (pomoStartBtn) pomoStartBtn.textContent = "▶ START";
+        if (pomoSection) pomoSection.classList.remove('timer-running');
+    });
+}
+
+function uiForLoggedIn(user) {
+    if (loginBtn) loginBtn.style.display = "none";
+    if (signupBtn) signupBtn.style.display = "none";
+
+    if (settingsBtn) settingsBtn.style.display = "inline-block";
+
+    if (projectForm) projectForm.style.display = "grid";
+    if (addProjectBtn) addProjectBtn.disabled = false;
+    if (projectStatsDiv) projectStatsDiv.style.display = "flex";
+    if (pomoSection) pomoSection.style.display = 'flex';
+}
+
+function uiForLoggedOut() {
+    if (loginBtn) loginBtn.style.display = "inline-block";
+    if (signupBtn) signupBtn.style.display = "inline-block";
+
+    if (settingsBtn) settingsBtn.style.display = "none";
+
+    if (projectForm) projectForm.style.display = "none";
+    if (addProjectBtn) addProjectBtn.disabled = true;
+    if (projectStatsDiv) projectStatsDiv.style.display = "none";
+    if (pomoSection) pomoSection.style.display = 'none';
+
+    if (pomoTimer) {
+        clearInterval(pomoTimer);
+        isPomoRunning = false;
+        pomoTimeLeft = 25 * 60;
+        updatePomoDisplay();
+        if (pomoStartBtn) pomoStartBtn.textContent = "▶ START";
     }
+}
+
+async function updateUserStats(user, xpGained = 0, coinsGained = 0) {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    let currentXP = 0; let currentCoins = 0;
+    if (userSnap.exists()) {
+        const data = userSnap.data();
+        currentXP = data.xp || 0;
+        currentCoins = data.coins || 0;
+    }
+    let newXP = currentXP + xpGained;
+    let newCoins = currentCoins + coinsGained;
+    let newLevel = Math.floor(newXP / GAME_CONFIG.levelStep) + 1;
+    await setDoc(userRef, { xp: newXP, coins: newCoins, level: newLevel, email: user.email }, { merge: true });
+    updateTopBarUI(newXP, newLevel, newCoins);
+    if (xpGained > 0 || coinsGained > 0) await myAlert(`🎮 MISSION ACCOMPLIE !\n+${xpGained} XP\n+${coinsGained} Crédits`);
+}
+
+async function syncUserData(user) {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+        const data = userSnap.data();
+        updateTopBarUI(data.xp || 0, data.level || 1, data.coins || 0);
+    } else {
+        updateTopBarUI(0, 1, 0);
+    }
+}
+
+function updateTopBarUI(xp, level, coins) {
+    if (!userLevelContainer) return;
+    const levelBadge = document.getElementById('level-badge');
+    const xpBarFill = document.getElementById('xp-bar-fill');
+    const xpText = document.getElementById('xp-text');
+    const coinsDisplay = document.getElementById('user-coins');
+
+    userLevelContainer.style.display = 'flex';
+    levelBadge.textContent = `LVL ${level}`;
+    const currentLevelXp = xp % GAME_CONFIG.levelStep;
+    xpText.textContent = `${currentLevelXp} / ${GAME_CONFIG.levelStep} XP`;
+    const progress = (currentLevelXp) / GAME_CONFIG.levelStep * 100;
+    xpBarFill.style.width = `${progress}%`;
+    if (coinsDisplay) coinsDisplay.textContent = `${coins} ₵`;
+}
 });
