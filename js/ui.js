@@ -1,8 +1,5 @@
 import { GAME_CONFIG } from "./config.js";
 
-// ==========================================
-// GESTION DE LA BARRE D'XP (TOP BAR)
-// ==========================================
 export function updateTopBarUI(xp, level, coins) {
     const userLevelContainer = document.getElementById('user-level-container');
     const levelBadge = document.getElementById('level-badge');
@@ -24,9 +21,6 @@ export function updateTopBarUI(xp, level, coins) {
     if (coinsDisplay) coinsDisplay.textContent = `${coins} ₵`;
 }
 
-// ==========================================
-// RENDU D'UNE CARTE PROJET
-// ==========================================
 export function renderProject(doc) {
     const project = doc.data();
     const projectId = doc.id;
@@ -39,7 +33,6 @@ export function renderProject(doc) {
 
     if (isNaN(startDate) || isNaN(endDate)) return null;
 
-    // Calcul pourcentage
     let percentage = 0;
     if (status === "completed") percentage = 100;
     else {
@@ -55,13 +48,11 @@ export function renderProject(doc) {
     const remainingDays = (endDate - today) / msPerDay;
     const isUrgent = status === "pending" && percentage < 100 && remainingDays <= 3;
 
-    // Couleurs priorité
-    let priorityColor = "#555";
-    if (priority === "p1") priorityColor = "#ff0000"; // Urgent & Important
-    if (priority === "p2") priorityColor = "#00FFFF"; // Important
-    if (priority === "p3") priorityColor = "#FFFF00"; // Urgent
 
-    // Création DOM
+    let priorityColor = "#555";
+    if (priority === "p1") priorityColor = "#ff0000";
+    if (priority === "p2") priorityColor = "#00FFFF";
+    if (priority === "p3") priorityColor = "#FFFF00";
     const projectCard = document.createElement("div");
     projectCard.className = "project-card";
     projectCard.style.borderLeft = `5px solid ${priorityColor}`;
@@ -69,7 +60,7 @@ export function renderProject(doc) {
     if (isUrgent) projectCard.classList.add("is-urgent");
     if (status === "completed") projectCard.classList.add("is-completed");
 
-    // HTML Boutons
+ 
     const aiButtonHTML = status === "pending"
         ? `<button class="ai-task-btn" data-id="${projectId}">📄 IA Tasks</button>` : '';
     const editButtonHTML = status === "pending"
@@ -87,7 +78,7 @@ export function renderProject(doc) {
          </div>
      `;
 
-    // HTML Tâches
+    
     const tasksListHTML = aiTasks.map(mainTask => {
         const subTasksHTML = (mainTask.subTasks || []).map(sub => `
             <div class="task-item task-sub ${sub.done ? 'done' : ''}" style="margin-left: 20px; border-left: 2px solid #333;">
@@ -128,7 +119,7 @@ export function renderProject(doc) {
 
     const progressInnerClass = status === "completed" ? "is-completed" : "";
 
-    // Assemblage final
+  
     projectCard.innerHTML = `
     <div class="project-header">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -153,12 +144,8 @@ export function renderProject(doc) {
     return projectCard;
 }
 
-// ==========================================
-// GESTION ETAT UI (LOGIN / LOGOUT)
-// ==========================================
-
 export function uiForLoggedIn() {
-    // On récupère les éléments ici car ce fichier ne connait pas main.js
+   
     const loginBtn = document.getElementById("login-btn");
     const signupBtn = document.getElementById("signup-btn");
     const settingsBtn = document.getElementById('settings-btn');
@@ -177,7 +164,6 @@ export function uiForLoggedIn() {
 }
 
 export function uiForLoggedOut() {
-    // On récupère les éléments à nouveau
     const loginBtn = document.getElementById("login-btn");
     const signupBtn = document.getElementById("signup-btn");
     const settingsBtn = document.getElementById('settings-btn');
