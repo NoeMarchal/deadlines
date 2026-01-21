@@ -1,0 +1,74 @@
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 20px;
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+  transition: background 0.3s, color 0.3s;
+}
+
+h1, h2, h3, button, label, input, select {
+  font-family: var(--font-main);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+}
+
+main {
+  max-width: 95%;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.dashboard-container {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.left-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  margin-top: 58px;
+}
+
+.right-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+footer {
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 40px;
+  border-top: 1px solid var(--border-color);
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+#social-links {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+#social-links a {
+  color: #aaa;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+#social-links a:hover {
+  color: var(--secondary-color);
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }

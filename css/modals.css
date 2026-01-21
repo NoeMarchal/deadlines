@@ -1,0 +1,60 @@
+#custom-modal-overlay, #help-modal-overlay, #settings-overlay, #edit-project-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.85); z-index: 2000; display: flex;
+  justify-content: center; align-items: center; backdrop-filter: blur(4px);
+}
+#edit-project-overlay { z-index: 2500; }
+
+#custom-modal-box, #help-modal-box, #settings-box, #edit-project-box {
+  background: var(--card-bg); border: 2px solid var(--accent-color);
+  padding: 30px; width: 450px; max-width: 90%; text-align: center;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); animation: modalPop 0.3s ease-out;
+  color: var(--text-color); border-radius: var(--border-radius);
+}
+
+#help-modal-box { border-color: #ffff00; width: 500px; text-align: left; }
+#help-modal-box h2 { color: #ffff00; margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+.help-content { max-height: 60vh; overflow-y: auto; padding-right: 10px; line-height: 1.5; }
+.help-content h3 { color: var(--accent-color); margin-top: 20px; }
+
+#settings-box { width: 350px; }
+.settings-section { margin-bottom: 20px; text-align: left; }
+.settings-section label { display: block; margin-bottom: 5px; color: var(--accent-color); font-size: 0.9em; }
+
+#theme-selector, #settings-api-key {
+  width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 10px;
+  background: var(--bg-color); color: var(--text-color);
+  border: 1px solid var(--border-color); border-radius: var(--border-radius);
+}
+
+#modal-title {
+  color: var(--accent-color); margin-top: 0;
+  border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;
+}
+#modal-input {
+  width: 100%; background: var(--bg-color); border: 1px solid #555;
+  color: var(--text-color); padding: 10px; margin-bottom: 20px;
+  box-sizing: border-box; border-radius: var(--border-radius);
+}
+.modal-buttons { display: flex; justify-content: center; gap: 15px; }
+
+#edit-project-box { text-align: left; width: 400px; }
+#edit-project-box h3 { text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-top: 0; color: var(--accent-color); }
+#edit-project-box label { display: block; margin-top: 15px; font-size: 0.9em; color: #aaa; }
+#edit-project-box input, #edit-project-box select {
+  width: 100%; margin-top: 5px; background: var(--bg-color); color: var(--text-color);
+  border: 1px solid #555; padding: 10px; border-radius: var(--border-radius);
+  box-sizing: border-box; font-family: var(--font-main);
+}
+.edit-btn {
+  background-color: transparent; color: #FFFF00; border: 1px solid #FFFF00;
+  padding: 5px 10px; cursor: pointer; font-size: 0.9em; text-transform: uppercase;
+  transition: all 0.2s; border-radius: var(--border-radius);
+}
+.edit-btn:hover { background-color: #FFFF00; color: #000; box-shadow: 0 0 8px rgba(255, 255, 0, 0.5); }
+
+@keyframes modalPop {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
